@@ -8,7 +8,8 @@ namespace EfCoreConsoleApp
         {
             Console.WriteLine("Hello, World!");
 
-            BookData.ListAllBook();
+            //BookData.ListAllBook();
+            BookData.ChangeWebUrl();
         }
     }
 }

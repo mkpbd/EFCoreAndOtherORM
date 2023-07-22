@@ -31,5 +31,23 @@ namespace EfCoreConsoleApp.FrontendDataShow
             }
 
         }
+
+        public static void ChangeWebUrl()
+        {
+            Console.Write("New Quantum Networking WebUrl > ");
+            var newWebUrl = Console.ReadLine();
+            using (var db = new ApplicationDbContext())
+            {
+                var singleBook = db.Books
+                .Include(book => book.Author)
+                .Single(book => book.Title == "Quantum Networking");
+
+                singleBook.Author.WebUrl = newWebUrl;
+                db.SaveChanges();
+                Console.WriteLine("... SavedChanges called.");
+            }
+           BookData.ListAllBook();
+        }
+
     }
 }

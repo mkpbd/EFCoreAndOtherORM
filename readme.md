@@ -69,6 +69,12 @@ provides a more detailed description of the process:
 
 ![1690038676618](image/readme/1690038676618.png)
 
-EF Core uses Microsoft’s .NET’s Language Integrated Query (LINQ) to carry the commands it wants done, and normal .NET classes to hold the data.
+EF Core uses Microsoft's .NET’s Language Integrated Query (LINQ) to carry the commands it wants done, and normal .NET classes to hold the data.
 
 The query db.Books.AsNoTracking().Include(book => book.Author) accesses the DbSet `<Book>` property in the application’s DbContext and adds a ***.Include(book => book.Author)*** at the end to ask that the Author parts of the relationship are loaded too. This is converted by the database provider into an SQL command to access the database. The resulting SQL is cached to avoid the cost of retranslation if the same database access is used again.
+
+![1690039565366](image/readme/1690039565366.png)
+
+![1690040277898](image/readme/1690040277898.png)
+
+![1690040350772](image/readme/1690040350772.png)
