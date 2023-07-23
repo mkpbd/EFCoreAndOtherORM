@@ -471,3 +471,158 @@ options.PageSize);
 ```
 
 ![1690124273484](image/readme/1690124273484.png)
+
+#### Introducing EF Core's entity State
+
+1. Added—The entity needs to be created in the database. SaveChanges inserts it.
+2. Unchanged—The entity exists in the database and hasn’t been modified on the client. SaveChanges ignores it.
+3. Modified—The entity exists in the database and has been modified on the client. SaveChanges updates it.
+4. Deleted—The entity exists in the database but should be deleted. SaveChanges deletes it.
+5. Detached—The entity you provided isn’t tracked. SaveChanges doesn’t see it.
+
+**Creating a single entity on its own**
+
+1 Add the entity to the application’s DbContext.
+2 Call the application’s DbContext’s SaveChanges method.
+
+```csharp
+var itemToAdd = new ExampleEntity
+{
+MyMessage = "Hello World"
+};
+context.Add(itemToAdd);
+context.SaveChanges();
+```
+
+![1690124666784](image/readme/1690124666784.png)
+
+**SQL commands created to insert a new row into the SingleEntities table**
+
+```
+SET NOCOUNT ON;
+INSERT INTO ExampleEntities]
+([MyMessage]) VALUES (@p0);
+SELECT [ExampleEntityId]
+FROM [ExampleEntities]
+WHERE @@ROWCOUNT = 1 AND
+[ExampleEntityId] = scope_identity();
+```
+
+Adding a Book entity class also adds any linked entity classes
+
+```csharp
+var book = new Book
+{
+Title = "Test Book",
+PublishedOn = DateTime.Today,
+Reviews = new List<Review>()
+{
+new Review
+{
+NumStars = 5,
+Comment = "Great test book!",
+VoterName = "Mr U Test"}}};
+context.Add(book);
+context.SaveChanges();
+```
+
+![1690126499868](image/readme/1690126499868.png)
+
+ *Adding a Book with an existing Author*
+
+```csharp
+var foundAuthor = context.Authors
+.SingleOrDefault(author => author.Name == "Mr. A");
+if (foundAuthor == null)
+throw new Exception("Author not found");
+var book = new Book
+{
+Title = "Test Book",
+PublishedOn = DateTime.Today
+};
+book.AuthorsLink = new List<BookAuthor>
+{
+new BookAuthor
+{
+Book = book,
+Author = foundAuthor
+}
+};
+context.Add(book);
+context.SaveChanges();
+```
+
+![1690127174435](image/readme/1690127174435.png)
+
+The first four lines load an Author entity with some checks to make sure that it was found; this Author class instance is tracked, so EF Core knows that it is already in the database. You create a new Book entity and add a new BookAuthor linking entity, but
+instead of creating a new Author entity instance, you use the Author entity that you read in from the database. Because EF Core is tracking the Author instance and knows that it's in the database, EF Core won't try to add it again to the database when *SaveChanges*
+
+### **Updating database rows**
+
+Updating a database row is achieved in three stages:
+1 Read the data (database row), possibly with some relationships.
+2 Change one or more properties (database columns).
+3 Write the changes back to the database (update the row).
+
+**Updating Quantum Networking’s publication date**
+
+```csharp
+var book = context.Books
+.SingleOrDefault(p =>
+p.Title == "Quantum Networking");
+
+if (book == null)
+throw new Exception("Book not found");
+
+book.PublishedOn = new DateTime(2058, 1, 1);
+
+context.SaveChanges();
+```
+
+![1690127494610](image/readme/1690127494610.png)
+
+*Handling disconnected updates in a web application*
+
+1. The first stage is an initial read, done in one instance of the application's **DbContext**.
+2. The second stage applies the update by using a new instance of the application's **DbContext**.
+
+```csharp
+var book = Context.Books.Find(BookId);
+book.PublishedOn = PublishDate;
+context.SaveChanges();
+```
+
+![1690127728438](image/readme/1690127728438.png)
+
+ChangePubDateDto sends data to and receives it from the user
+
+```csharp
+public class ChangePubDateDto
+{
+public int BookId { get; set; }
+public string Title { get; set; }
+[DataType(DataType.Date)]
+public DateTime PublishedOn { get; set; }
+}
+```
+
+![1690127829615](image/readme/1690127829615.png)
+
+**The Book entity class, showing the relationships to update**
+
+```csharp
+public class Book
+{
+   public int BookId { get; set; }
+ //-----------------------------------------------
+//relationships
+   public PriceOffer Promotion { get; set; }
+   public ICollection<Review> Reviews { get; set; }
+   public ICollection<Tag> Tags { get; set; }
+   public ICollection<BookAuthor> AuthorsLink { get; set; }
+}
+```
+
+![1690128323618](image/readme/1690128323618.png)
+
+![1690128352429](image/readme/1690128352429.png)
