@@ -49,7 +49,7 @@ namespace EfCoreConsoleApp.FrontendDataShow
                     Console.WriteLine("... SavedChanges called.");
                 }catch(Exception ex)
                 {
-
+                    
                 }
             }
 

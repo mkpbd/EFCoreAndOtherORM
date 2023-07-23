@@ -410,3 +410,64 @@ var books = context.Books
 ```
 
 ![1690123619005](image/readme/1690123619005.png)
+
+but you can also define the collation in a query by using the EF.Functions.Collate method. The following code snippet sets an SQL Server collation, which means that this query will compare the string using the Latin1_General_CS_AS (case-sensitive) collation for this query:
+
+```csharp
+context.Books.Where( x =>
+EF.Functions.Collate(x.Title, "Latin1_General_CS_AS")
+== “HELP” //This does not match “help”
+```
+
+```csharp
+var books = context.Books
+.Where(p => EF.Functions.Like(p.Title, "The ___ sat on the %."))
+.ToList();
+```
+
+Paging the books in the list
+
+```csharp
+public static IQueryable<T> Page<T>(
+this IQueryable<T> query,
+int pageNumZeroStart, int pageSize)
+{
+if (pageSize == 0)
+throw new ArgumentOutOfRangeException
+(nameof(pageSize), "pageSize cannot be zero.");
+if (pageNumZeroStart != 0)
+query = query
+.Skip(pageNumZeroStart * pageSize);
+return query.Take(pageSize);
+}
+```
+
+![1690124168726](image/readme/1690124168726.png)
+
+The ListBookService class providing a sorted, filtered, and paged list
+
+```csharp
+public class ListBooksService
+{
+private readonly EfCoreContext _context;
+public ListBooksService(EfCoreContext context)
+{
+_context = context;
+}
+public IQueryable<BookListDto> SortFilterPage
+(SortFilterPageOptions options)
+{
+var booksQuery = _context.Books
+.AsNoTracking()
+.MapBookToDto()
+.OrderBooksBy(options.OrderByOptions)
+.FilterBooksBy(options.FilterBy,
+options.FilterValue);
+options.SetupRestOfDto(booksQuery);
+return booksQuery.Page(options.PageNum-1,
+options.PageSize);
+}
+}
+```
+
+![1690124273484](image/readme/1690124273484.png)
