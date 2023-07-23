@@ -124,3 +124,119 @@ In this case, you create your own linking table with an Order value in it becaus
 This table uses the foreign keys as the primary keys. Because primary keys must be unique, this ensures that only one link can exist between a book and an author.
 
 *The three tables involved in creating the many-to-many relationship between the Books table and the Authors table. I use a many-to-many relationship because books can have many authors, and authors may have written many books. The extra feature needed here is the Order value, because the order in which authors are listed in a book matters, so I use the Order value to display the authors in the correct sequence.*
+
+### Understanding database queries
+
+EF Core database query, with the three main parts of the query highlighted.
+
+```csharp
+context.Books.Where(p => p.Title.StartsWith("Quantum").ToList();
+```
+
+![1690117443741](image/readme/1690117443741.png)
+
+### The execute command
+
+The last part of the command reveals something about LINQ. Until a final execute command is applied at the end of the sequence of LINQ commands, the LINQ is held as a series of commands in what is called an expression tree.
+
+which means that it hasn’t been executed on the data yet. EF Core can translate an expression tree into the correct commands for the database you’re using. In EF Core, a query is executed against the database when
+
+1. It's enumerated by a foreach statement.
+2. It’s enumerated by a collection operation such as ToArray, ToDictionary,
+3. ToList, ToListAsync, and so forth.
+4. LINQ operators such as First or Any are specified in the outermost part of the query.
+
+   You’ll use certain EF Core commands, such as Load, in the explicit loading of a relationship later in this chapter.
+
+   At this point, your LINQ query will be converted to database commands and sent to the database. If you want to build high-performance database queries, you want all your LINQ commands for filtering, sorting, paging, and so on to come before you call an execute command.
+
+```csharp
+context.Books.AsNoTracking().Where(p => p.Title.StartsWith("Quantum")).ToList();
+```
+
+A detailed list of the differences between the normal, read-write query and the AsNoTracking, read-only query.
+
+#### Eager loading: Loading relationships with the primary entity class
+
+Eager loading is specified via two fluent methods, ***Include***and ***ThenInclude***. The next listing shows the loading of the first row of the **Books** table as an instance of the **Book** entity class and the eager loading of the single relationship, **Reviews**
+
+```csharp
+var firstBook = context.Books.Include(book => book.Reviews).FirstOrDefault();
+```
+
+![1690118690795](image/readme/1690118690795.png)
+
+Now let’s look at a more complex example. The following listing shows a query to get the first Book, with eager loading of all its relationships—in this case, AuthorsLink and the second-level Author table, the Reviews, and the optional Promotion class
+
+```csharp
+var firstBook = context.Books
+.Include(book => book.AuthorsLink
+.OrderBy(bookAuthor => bookAuthor.Order))
+.ThenInclude(bookAuthor => bookAuthor.Author)
+.Include(book => book.Reviews
+.Where(review => review.NumStars == 5))
+.Include(book => book.Promotion)
+.First
+```
+
+![1690119603954](image/readme/1690119603954.png)
+
+```csharp
+var firstBook = context.Books.First();
+context.Entry(firstBook)
+.Collection(book => book.AuthorsLink).Load();
+foreach (var authorLink in firstBook.AuthorsLink)
+{
+context.Entry(authorLink)
+.Reference(bookAuthor =>
+bookAuthor.Author).Load();
+}
+context.Entry(firstBook)
+.Collection(book => book.Tags).Load();
+context.Entry(firstBook)
+.Reference(book => book.Promotion).Load();
+```
+
+![1690120251206](image/readme/1690120251206.png)
+
+The second approach to loading data is explicit loading. After you’ve loaded the primary entity class, you can explicitly load any other relationships you want explicit loading .First, it loads the Book; then it uses explicit-loading commands to read all the relationships.
+
+![1690120410699](image/readme/1690120410699.png)
+
+Alternatively, explicit loading can be used to apply a query to the relationship instead of loading the relationship.  shows the use of the explicit-loading method *Query* to obtain the count of reviews and to load the star ratings of each review.
+
+You can use any standard LINQ command after the Query method, such as *Where* or *OrderBy*
+
+```csharp
+var firstBook = context.Books.First();
+var numReviews = context.Entry(firstBook)
+.Collection(book => book.Reviews)
+.Query().Count();
+
+var starRatings = context.Entry(firstBook)
+.Collection(book => book.Reviews)
+.Query().Select(review => review.NumStars)
+.ToList();
+```
+
+### Select loading: Loading specific parts of primary entity class and any relationships
+
+```csharp
+var books = context.Books
+.Select(book => new
+{
+book.Title,
+book.Price,
+NumReviews = book.Reviews.Count,
+}).ToList();
+```
+
+![1690120752188](image/readme/1690120752188.png)
+
+#### **Lazy loading: Loading relationships as required**
+
+Lazy loading makes writing queries easy, but it has a bad effect on database performance. Lazy loading does require some changes to your DbContext or your entity classes, but after you make those changes, reading is easy; if you access a navigational property that isn’t loaded, EF Core will execute a database query to load that navigational
+property. You can set up lazy loading in either of two ways
+
+1. Adding the Microsoft.EntityFrameworkCore.Proxies library when configuring your DbContext
+2. Injecting a lazy loading method into the entity class via its constructor
