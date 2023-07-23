@@ -240,3 +240,102 @@ property. You can set up lazy loading in either of two ways
 
 1. Adding the Microsoft.EntityFrameworkCore.Proxies library when configuring your DbContext
 2. Injecting a lazy loading method into the entity class via its constructor
+
+#### Using client vs. server evaluation: Adapting data at the last stage of a query
+
+```csharp
+var firstBook = context.Books
+.Select(book => new
+{
+book.BookId,
+book.Title,
+AuthorsString = string.Join(", ",
+book.AuthorsLink
+.OrderBy(ba => ba.Order)
+.Select(ba => ba.Author.Name))
+}
+).First();
+```
+
+![1690121189261](image/readme/1690121189261.png)
+
+Select query that includes a non-SQL command, string.Join
+
+```csharp
+var firstBook = context.Books
+.Select(book => new
+{
+book.BookId,
+book.Title,
+AuthorsString = string.Join(", ",
+book.AuthorsLink
+.OrderBy(ba => ba.Order)
+.Select(ba => ba.Author.Name))
+}).First()
+```
+
+![1690122798086](image/readme/1690122798086.png)
+
+Running this code on a book that has two authors, Jack and Jill, would cause AuthorsString to contain Jack, Jill, and the BookId, and Title would be set to the value of the corresponding columns in the Books table.
+
+![1690122898255](image/readme/1690122898255.png)
+
+**Building complex queries**
+
+![1690122980475](image/readme/1690122980475.png)
+
+```csharp
+public class BookListDto
+{
+public int BookId { get; set; }
+public string Title { get; set; }
+public DateTime PublishedOn { get; set; }
+public decimal Price { get; set; }
+public decimal
+ActualPrice { get; set; }
+public string
+PromotionPromotionalText { get; set; }
+public string AuthorsOrdered { get; set; }
+public int ReviewsCount { get; set; }
+public double?
+ReviewsAverageVotes { get; set; }
+public string[] TagStrings { get; set; }
+}
+```
+
+![1690123054130](image/readme/1690123054130.png)
+
+The Select query to fill BookListDto
+
+```csharp
+public static IQueryable<BookListDto>
+MapBookToDto(this IQueryable<Book> books)
+{
+return books.Select(book => new BookListDto
+{
+BookId = book.BookId,
+Title = book.Title,
+Price = book.Price,
+PublishedOn = book.PublishedOn,
+ActualPrice = book.Promotion == null
+? book.Price
+: book.Promotion.NewPrice,
+PromotionPromotionalText =
+book.Promotion == null
+? null
+: book.Promotion.PromotionalText,
+AuthorsOrdered = string.Join(", ",
+book.AuthorsLink
+.OrderBy(ba => ba.Order)
+.Select(ba => ba.Author.Name)),
+ReviewsCount = book.Reviews.Count,
+ReviewsAverageVotes =
+book.Reviews.Select(review =>
+(double?) review.NumStars).Average(),
+TagStrings = book.Tags
+.Select(x => x.TagId).ToArray(),
+});
+}
+```
+
+![1690123147317](image/readme/1690123147317.png)
