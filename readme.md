@@ -1,3 +1,12 @@
+The NuGet packages are listed for the activity project using the Manage NuGet Packages for Solution option
+
+1. Microsoft.EntityFrameworkCore
+2. Microsoft.EntityFrameworkCore.Design
+3. Microsoft.EntityFrameworkCore.SqlServer
+4. Microsoft.EntityFrameworkCore.Tools
+
+ add-migration Initial_Migration
+
 You can use EF Core as an O/RM that maps between the relational database and the
 .NET world of classes and software code.
 
