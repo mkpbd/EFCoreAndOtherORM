@@ -38,14 +38,22 @@ namespace EfCoreConsoleApp.FrontendDataShow
             var newWebUrl = Console.ReadLine();
             using (var db = new ApplicationDbContext())
             {
-                var singleBook = db.Books
-                .Include(book => book.Author)
-                .Single(book => book.Title == "Quantum Networking");
+                try
+                {
+                    var singleBook = db.Books
+                    .Include(book => book.Author)
+                    .Single(book => book.Title == "Quantum Networking");
 
-                singleBook.Author.WebUrl = newWebUrl;
-                db.SaveChanges();
-                Console.WriteLine("... SavedChanges called.");
+                    singleBook.Author.WebUrl = newWebUrl;
+                    db.SaveChanges();
+                    Console.WriteLine("... SavedChanges called.");
+                }catch(Exception ex)
+                {
+
+                }
             }
+
+
            BookData.ListAllBook();
         }
 

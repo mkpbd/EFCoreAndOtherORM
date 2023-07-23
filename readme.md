@@ -78,3 +78,40 @@ The query db.Books.AsNoTracking().Include(book => book.Author) accesses the DbSe
 ![1690040277898](image/readme/1690040277898.png)
 
 ![1690040350772](image/readme/1690040350772.png)
+
+RelationShips
+
+1. One-to-one relationship—PriceOffer to a Book
+2. One-to-many relationship—Book with Reviews
+3. Many-to-many relationship—Books linked to Authors and Books linked to Tags
+
+ONE-TO-ONE RELATIONSHIP: PRICEOFFER TO A BOOK
+
+A book can have a promotional price applied to it with an optional row in the Price- Offer, which is an example of a one-to-one relationship.
+
+Technically, the relationship is one-to-zero-or-one, but EF Core handles it the same way
+
+![1690069505748](image/readme/1690069505748.png)
+
+I have a primary key and a foreign key to make the relationship easier to understand. But for one-to-one relationships,
+you can make the foreign key be the primary key too. In the PriceOffer table , you would have a primary key, called BookId, which would also be the foreign key. As a result, you lose the PriceOfferId column, which makes the table slightly more efficient from the database side
+
+**ONE-TO-MANY RELATIONSHIP: REVIEWS TO A BOOK**
+
+You want to allow customers to review a book; they can give a book a star rating and optionally leave a comment. Because a book may have no reviews or many (unlimited) reviews, you need to create a table to hold that data.
+
+![1690070118676](image/readme/1690070118676.png)
+
+In the Summary display, you need to count the number of reviews and work out the average star rating to show a summary. Here's a typical onscreen display you might produce from this one-to-many relationship
+
+**MANY-TO-MANY RELATIONSHIP: MANUALLY CONFIGURED**
+
+Books can be written by one or more authors, and an author may write one or more books. Therefore, you need a table called Books to hold the books data and another table called Authors to hold the authors. The link between the Books and Authors
+tables is called a many-to-many relationship, which in this case needs a linking table to achieve this relationship.
+In this case, you create your own linking table with an Order value in it because the names of the authors in a book must be displayed in a specific order
+
+![1690070489201](image/readme/1690070489201.png)
+
+This table uses the foreign keys as the primary keys. Because primary keys must be unique, this ensures that only one link can exist between a book and an author.
+
+*The three tables involved in creating the many-to-many relationship between the Books table and the Authors table. I use a many-to-many relationship because books can have many authors, and authors may have written many books. The extra feature needed here is the Order value, because the order in which authors are listed in a book matters, so I use the Order value to display the authors in the correct sequence.*
