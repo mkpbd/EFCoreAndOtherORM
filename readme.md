@@ -339,3 +339,74 @@ TagStrings = book.Tags
 ```
 
 ![1690123147317](image/readme/1690123147317.png)
+
+```csharp
+var result = _db.Books
+.Where(x => x.PublishedOn <= DateTime.UtcNow.Date)
+.Select(x => x.PublishedOn.Year)
+.Distinct()
+.OrderByDescending(x => x.PublishedOn)
+.Select(x => new DropdownTuple
+{
+Value = x.ToString(),
+Text = x.ToString()
+}).ToList();
+var comingSoon = _db.Books.
+Any(x => x.PublishedOn > DateTime.Today);
+if (comingSoon)
+result.Insert(0, new DropdownTuple{
+Value = BookListDtoFilter.AllBooksNotPublishedString,
+Text = BookListDtoFilter.AllBooksNotPublishedString
+});
+return result;
+```
+
+![1690123480220](image/readme/1690123480220.png)
+
+```csharp
+public static IQueryable<BookListDto> FilterBooksBy(
+this IQueryable<BookListDto> books,
+BooksFilterBy filterBy, string filterValue)
+{
+if (string.IsNullOrEmpty(filterValue))
+return books;
+switch (filterBy)
+{
+case BooksFilterBy.NoFilter:
+return books;
+case BooksFilterBy.ByVotes:
+var filterVote = int.Parse(filterValue);
+return books.Where(x =>
+x.ReviewsAverageVotes > filterVote);
+case BooksFilterBy.ByTags:
+return books.Where(x => x.TagStrings
+.Any(y => y == filterValue));
+case BooksFilterBy.ByPublicationYear:
+if (filterValue == AllBooksNotPublishedString)
+return books.Where(
+x => x.PublishedOn > DateTime.UtcNow);
+var filterYear = int.Parse(filterValue);
+return books.Where(
+x => x.PublishedOn.Year == filterYear
+&& x.PublishedOn <= DateTime.UtcNow);
+default:
+throw new ArgumentOutOfRangeException
+(nameof(filterBy), filterBy, null);
+}
+}
+```
+
+![1690123569425](image/readme/1690123569425.png)
+
+```csharp
+var books = context.Books
+.Where(p => p.Title.StartsWith("The"))
+.ToList();
+var books = context.Books
+.Where(p => p.Title.EndsWith("MAT."))
+.ToList();
+var books = context.Books
+.Where(p => p.Title.Contains("cat"))
+```
+
+![1690123619005](image/readme/1690123619005.png)
