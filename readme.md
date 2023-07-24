@@ -626,3 +626,146 @@ public class Book
 ![1690128323618](image/readme/1690128323618.png)
 
 ![1690128352429](image/readme/1690128352429.png)
+
+**Principal and dependent relationships**
+
+The terms principal and dependent are used in EF to define parts of a relationship:
+
+1. Principal entity—Contains a primary key that the dependent relationship refer to via a foreign key
+2. Dependent entity—Contains the foreign key that refers to the principal entity's primary key
+
+The Book entity class is the principal entity. The **PriceOffer, Review**, and **BookAuthor** entity classes are the dependent entities.
+
+I find the terms principal and dependent to be helpful, because they define what's in charge: the principal entity. I use these terms throughout this book where applicable.
+
+**NOTE** An entity class can be both a principal and a dependent entity at the same time. In a hierarchical relationship of, say, libraries with books that have reviews, the book would be a dependent relationship of the library entity class.
+
+**Updating one-to-one relationships Adding a PriceOffer to a book**
+
+```csharp
+public class PriceOffer
+{
+public int PriceOfferId { get; set; }
+public decimal NewPrice { get; set; }
+public string PromotionalText { get; set; }
+//-----------------------------------------------
+//Relationships
+public int BookId { get; set; }
+}
+```
+
+![1690158267737](image/readme/1690158267737.png)
+
+**Adding a new promotional price to an existing book that doesn't have one**
+
+```csharp
+var book = context.Books
+.Include(p => p.Promotion)
+.First(p => p.Promotion == null);
+book.Promotion = new PriceOffer
+{
+NewPrice = book.Price / 2,
+PromotionalText = "Half price today!"
+};
+context.SaveChanges();
+```
+
+![1690158489583](image/readme/1690158489583.png)
+
+**ChangePriceOfferService class with a method to handle each stage**
+
+```csharp
+public class ChangePriceOfferService : IChangePriceOfferService
+{
+private readonly EfCoreContext _context;
+public Book OrgBook { get; private set; }
+public ChangePriceOfferService(EfCoreContext context)
+{
+_context = context;
+}
+public PriceOffer GetOriginal(int id)
+{
+OrgBook = _context.Books
+.Include(r => r.Promotion)
+.Single(k => k.BookId == id);
+return OrgBook?.Promotion
+?? new PriceOffer
+{
+BookId = id,
+NewPrice = OrgBook.Price
+};
+}
+public Book AddUpdatePriceOffer(PriceOffer promotion)
+{
+var book = _context.Books
+.Include(r => r.Promotion)
+.Single(k => k.BookId
+== promotion.BookId);
+if (book.Promotion == null)
+{
+book.Promotion = promotion;
+}
+else
+{
+book.Promotion.NewPrice
+= promotion.NewPrice;
+book.Promotion.PromotionalText
+= promotion.PromotionalText;
+}
+_context.SaveChanges();
+return book;
+}
+}
+```
+
+![1690158693344](image/readme/1690158693344.png)
+
+Creating a PriceOffer row to go with an existing book
+
+```csharp
+var book = context.Books
+.First(p => p.Promotion == null);
+context.Add( new PriceOffer
+{
+BookId = book.BookId,
+NewPrice = book.Price / 2,
+PromotionalText = "Half price today!"
+});
+context.SaveChanges();
+```
+
+![1690158994138](image/readme/1690158994138.png)
+
+**Updating one-to-many relationships: Adding a review to a book**
+
+```csharp
+public class Review
+{
+public int ReviewId { get; set; }
+public string VoterName { get; set; }
+public int NumStars { get; set; }
+public string Comment { get; set; }
+//-----------------------------------------
+//Relationships
+public int BookId { get; set; }
+}
+```
+
+![1690159275908](image/readme/1690159275908.png)
+
+**The Review class, showing the foreign key back to the Book entity class**
+
+```csharp
+public class Review
+{
+public int ReviewId { get; set; }
+public string VoterName { get; set; }
+public int NumStars { get; set; }
+public string Comment { get; set; }
+//-----------------------------------------
+//Relationships
+public int BookId { get; set; }
+}
+```
+
+![1690159452207](image/readme/1690159452207.png)
