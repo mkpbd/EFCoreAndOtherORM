@@ -21,10 +21,9 @@ You can use EF Core as an O/RM that maps between the relational database and the
 | Foregin keys: define a relationship | Reference to antoher class                         |
 | SQL for instance, WHERE             | .NET LINQ for instance, Where (p => ....)          |
 
-For this MyFirstEfCoreApp application example, I created a simple database, shown in
-figure  with only two tables:
+For this MyFirstEfCoreApp application example, I created a simple database, shown in figure  with only two tables:
 
-1. A Books table holding the book informatio
+1. A Books table holding the book information
 2. An Author table holding the author of each book
 
 ![1690034180926](image/readme/1690034180926.png)
@@ -769,3 +768,76 @@ public int BookId { get; set; }
 ```
 
 ![1690159452207](image/readme/1690159452207.png)
+
+**Adding a review to a book in the connected state**
+
+```csharp
+var book = context.Books
+.Include(p => p.Reviews)
+.First();
+book.Reviews.Add(new Review
+{
+VoterName = "Unit Test",
+NumStars = 5,
+Comment = "Great book!"
+});
+context.SaveChanges();
+```
+
+![1690159958830](image/readme/1690159958830.png)
+
+**Replacing a whole collection of reviews with another collection**
+
+```csharp
+var book = context.Books
+.Include(p => p.Reviews)
+.Single(p => p.BookId == twoReviewBookId);
+book.Reviews = new List<Review>
+{
+new Review
+{
+VoterName = "Unit Test",
+NumStars = 5,
+}
+};
+context.SaveChanges();
+```
+
+![1690160071691](image/readme/1690160071691.png)
+
+Adding a new review to a book in the example Book App
+
+```csharp
+public class AddReviewService
+{
+private readonly EfCoreContext _context;
+public string BookTitle { get; private set; }
+public AddReviewService(EfCoreContext context)
+{
+_context = context;
+}
+public Review GetBlankReview(int id)
+{
+BookTitle = _context.Books
+.Where(p => p.BookId == id)
+.Select(p => p.Title)
+.Single();
+return new Review
+{
+BookId = id
+};
+}
+public Book AddReviewToBook(Review review)
+{
+var book = _context.Books
+.Include(r => r.Reviews)
+.Single(k => k.BookId
+== review.BookId);
+book.Reviews.Add(review);
+_context.SaveChanges();
+return book;
+}
+}
+```
+
+![1690160303906](image/readme/1690160303906.png)
