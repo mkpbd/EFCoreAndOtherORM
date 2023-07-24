@@ -9,6 +9,8 @@ namespace EfCoreConsoleApp.Models
     public class Tag
     {
         public int TagId { get; set; }
-        public string TagName { get;set; }
+        public string? TagName { get;set; }
+        public int BookId { get; set; }
+        public List<Book>? Books { get; set; }
     }
 }

@@ -11,7 +11,7 @@ namespace EfCoreConsoleApp.Data
     public class ApplicationDbContext : DbContext
     {
 
-        private string connections = @"Server=SERVER\MSSQLSERVER01; Database=EFCoreConsoleApp; Trusted_Connection=True";
+        private string connections = @"Server=SERVER\MSSQLSERVER01; Database=BookAppDB; Trusted_Connection=True;TrustServerCertificate=True";
         //public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         //{
 
@@ -27,6 +27,8 @@ namespace EfCoreConsoleApp.Data
         public DbSet<Author> Authors { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<PriceOffer> PriceOffers { get; set; }
+        public DbSet<Tag> Tags { get; set; }
+        public DbSet<BookAuthor> BookAuthors { get; set; }
         
 
 

@@ -13,7 +13,14 @@ namespace EfCoreConsoleApp.Models
         public string Description { get; set; }
         public DateTime PublishedOn { get; set; }
 
+        // RelatinsShip start here
+
+        // One to one relation Shipe
         public int AuthorId { get; set; }
         public Author Author { get; set; }
+
+        // Many to  Many RelationShip
+        public int TagId { get; set; }
+        public List<Tag> Tags { get; set; }
     }
 }

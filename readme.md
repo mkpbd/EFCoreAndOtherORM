@@ -38,6 +38,32 @@ Books property  . The Author table name hasn’t got a DbSet `<T>` property, so 
 
 EF Core maps classes to database tables. Therefore, you need to create a class that will define the database table or match a database table if you already have a database
 
+```csharp
+
+public static void ListAll()
+{
+using (var db = new AppDbContext())
+{
+foreach (var book in
+db.Books.AsNoTracking()
+.Include(book => book.Author))
+{
+var webUrl = book.Author.WebUrl == null
+? "- no web URL given -"
+: book.Author.WebUrl;
+Console.WriteLine(
+$"{book.Title} by {book.Author.Name}");
+Console.WriteLine(" " +
+"Published on " +
+$"{book.PublishedOn:dd-MMM-yyyy}" +
+$". {webUrl}");
+}
+}
+}
+```
+
+The query** *db.Books.AsNoTracking().Include(book => book.Author)*** accesses the DbSet `<Book>` property in the application’s DbContext and adds a .Include (book => book.Author) at the end to ask that the Author parts of the relationship are loaded too. This is converted by the database provider into an SQL command to access the database.
+
 ![1690034449548](image/readme/1690034449548.png)
 
 The Author property is an EF Core navigational property. EF Core uses this on a save to see whether the Book has an Author class attached. If so, it sets the foreign key, AuthorId. Upon loading a Book class, the method Include will fill this property with the Author class that's linked to this Book class by using the foreign key, AuthorId.
@@ -81,7 +107,29 @@ EF Core uses Microsoft's .NET’s Language Integrated Query (LINQ) to carry the 
 
 The query db.Books.AsNoTracking().Include(book => book.Author) accesses the DbSet `<Book>` property in the application’s DbContext and adds a ***.Include(book => book.Author)*** at the end to ask that the Author parts of the relationship are loaded too. This is converted by the database provider into an SQL command to access the database. The resulting SQL is cached to avoid the cost of retranslation if the same database access is used again.
 
+
+
 ![1690039565366](image/readme/1690039565366.png)
+
+**The code to update the author’s WebUrl of the book Quantum Networking**
+
+```csharp
+public static void ChangeWebUrl()
+{
+Console.Write("New Quantum Networking WebUrl > ");
+var newWebUrl = Console.ReadLine();
+using (var db = new AppDbContext())
+{
+var singleBook = db.Books
+.Include(book => book.Author)
+.Single(book => book.Title == "Quantum Networking");
+singleBook.Author.WebUrl = newWebUrl;
+db.SaveChanges();
+Console.WriteLine("... SavedChanges called.");
+}
+ListAll();
+}
+```
 
 ![1690040277898](image/readme/1690040277898.png)
 
@@ -93,7 +141,7 @@ RelationShips
 2. One-to-many relationship—Book with Reviews
 3. Many-to-many relationship—Books linked to Authors and Books linked to Tags
 
-ONE-TO-ONE RELATIONSHIP: PRICEOFFER TO A BOOK
+***ONE-TO-ONE RELATIONSHIP: PRICEOFFER TO A BOOK***
 
 A book can have a promotional price applied to it with an optional row in the Price- Offer, which is an example of a one-to-one relationship.
 
@@ -104,7 +152,7 @@ Technically, the relationship is one-to-zero-or-one, but EF Core handles it the 
 I have a primary key and a foreign key to make the relationship easier to understand. But for one-to-one relationships,
 you can make the foreign key be the primary key too. In the PriceOffer table , you would have a primary key, called BookId, which would also be the foreign key. As a result, you lose the PriceOfferId column, which makes the table slightly more efficient from the database side
 
-**ONE-TO-MANY RELATIONSHIP: REVIEWS TO A BOOK**
+***ONE-TO-MANY RELATIONSHIP: REVIEWS TO A BOOK***
 
 You want to allow customers to review a book; they can give a book a star rating and optionally leave a comment. Because a book may have no reviews or many (unlimited) reviews, you need to create a table to hold that data.
 
@@ -112,17 +160,27 @@ You want to allow customers to review a book; they can give a book a star rating
 
 In the Summary display, you need to count the number of reviews and work out the average star rating to show a summary. Here's a typical onscreen display you might produce from this one-to-many relationship
 
-**MANY-TO-MANY RELATIONSHIP: MANUALLY CONFIGURED**
+***MANY-TO-MANY RELATIONSHIP: MANUALLY CONFIGURED***
 
-Books can be written by one or more authors, and an author may write one or more books. Therefore, you need a table called Books to hold the books data and another table called Authors to hold the authors. The link between the Books and Authors
-tables is called a many-to-many relationship, which in this case needs a linking table to achieve this relationship.
-In this case, you create your own linking table with an Order value in it because the names of the authors in a book must be displayed in a specific order
+*Books* can be written by one or more authors, and an author may write one or more books. Therefore, you need a table called Books to hold the books data and another table called Authors to hold the authors. The link between the ***Books** *and ***Authors* **tables is called a *many-to-many relationship*, which in this case needs a linking table to achieve this relationship.
+In this case, you create your own linking table with an *Order* value in it because the names of the authors in a book must be displayed in a specific order
 
 ![1690070489201](image/readme/1690070489201.png)
 
 This table uses the foreign keys as the primary keys. Because primary keys must be unique, this ensures that only one link can exist between a book and an author.
 
 *The three tables involved in creating the many-to-many relationship between the Books table and the Authors table. I use a many-to-many relationship because books can have many authors, and authors may have written many books. The extra feature needed here is the Order value, because the order in which authors are listed in a book matters, so I use the Order value to display the authors in the correct sequence.*
+
+***MANY-TO-MANY RELATIONSHIP: AUTOCONFIGURED BY EF CORE***
+
+Books can be tagged with different categories. A category might be applied to multiple books, and a book might have one or more categories, so a** *many-to-many*** linking table is needed. But unlike in the previous BookAuthor linking table, the tags don't have to be ordered, which makes the linking
+table simpler. EF Core 5 and later can automatically create the many-to-many linking table for you shows your database with the automatic BookTag table that provides a  ***many-to-many*** link between the Books table and the Tags table
+
+![1690178630761](image/readme/1690178630761.png)
+
+The Books and Tags tables are created by you, and EF Core detects the many-to-many relationship between the Books table and the Tags table. 
+
+EF Core automatically creates the linking table needed to set up the many-to-many relationships.
 
 ### Understanding database queries
 
@@ -144,6 +202,8 @@ which means that it hasn’t been executed on the data yet. EF Core can translat
 2. It’s enumerated by a collection operation such as ToArray, ToDictionary,
 3. ToList, ToListAsync, and so forth.
 4. LINQ operators such as First or Any are specified in the outermost part of the query.
+
+
 
    You’ll use certain EF Core commands, such as Load, in the explicit loading of a relationship later in this chapter.
 

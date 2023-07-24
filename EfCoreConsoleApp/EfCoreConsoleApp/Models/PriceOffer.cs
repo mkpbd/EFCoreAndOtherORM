@@ -12,7 +12,8 @@ namespace EfCoreConsoleApp.Models
         public int NewPrice { get; set; }
 
         public string PromotionalText { get; set; }
+        // Relationships  Book entity to PriceOffer
         public int BookId { get; set; }
-        public Book Books { get; set; }
+        public Book Book { get; set; }
     }
 }
