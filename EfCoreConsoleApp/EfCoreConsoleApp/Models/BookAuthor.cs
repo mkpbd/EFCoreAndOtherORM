@@ -10,6 +10,7 @@ namespace EfCoreConsoleApp.Models
     {
         public int BookAuthorId { get;set; }
         public int BookId { get; set; }
+        public int Order { get; set; }
         public List<Book> Books { get; set; }
         public int AuthorId { get; set; }
         public List<Author> Authors { get; set; }

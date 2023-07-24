@@ -62,7 +62,7 @@ $". {webUrl}");
 }
 ```
 
-The query** *db.Books.AsNoTracking().Include(book => book.Author)*** accesses the DbSet `<Book>` property in the application’s DbContext and adds a .Include (book => book.Author) at the end to ask that the Author parts of the relationship are loaded too. This is converted by the database provider into an SQL command to access the database.
+The query***db.Books.AsNoTracking().Include(book => book.Author)*** accesses the DbSet `<Book>` property in the application’s DbContext and adds a .Include (book => book.Author) at the end to ask that the Author parts of the relationship are loaded too. This is converted by the database provider into an SQL command to access the database.
 
 ![1690034449548](image/readme/1690034449548.png)
 
@@ -79,6 +79,10 @@ The other important part of the application is DbContext, a class you create tha
 access the database
 
 ![1690035940014](image/readme/1690035940014.png)
+
+### Application's DbContext property access
+
+The most common way to refer to a database table is via a **DbSet `<T>`** property in the application's **DbContext.   You'll use this** ***DbContext***  **property access throughout this chapter, but later chapters introduce other ways to get to a class or property.**
 
 ### Modeling the database
 
@@ -99,6 +103,83 @@ provides a more detailed description of the process:
 4. For the last input to the modeling process, EF Core runs the virtual method **OnModelCreating** inside the application’s **DbContext**. In this simple application, you don’t override the OnModelCreating method, but if you did, you
    could provide extra information via a fluent API to do more configuration of the modeling.
 
+***Eager loading of the Book class and all the related data***
+
+```csharp
+var firstBook = context.Books
+.Include(book => book.AuthorsLink)
+.ThenInclude(bookAuthor => bookAuthor.Author)
+.Include(book => book.Reviews)
+.Include(book => book.Tags)
+.Include(book => book.Promotion)
+.FirstOrDefault();
+```
+
+The listing shows the use of the eager-loading method **Include** to get the Authors-Link relationship.That Include is followed by ThenInclude to load the second-level relationship—in this case
+
+```csharp
+context.Books.Include(book => book.AuthorLink.Select(bookAuthor => bookAuthor.Author)
+```
+
+The same rule applies to **ThenInclude**: if the previous Include or **ThenInclude** was empty, subsequent **ThenIncludes** are ignored. If you don't Include a collection, it is null by default.
+
+The advantage of eager loading is that EF Core will load all the data referred to by the **Include** and **ThenInclude** in an efficient manner, using a minimum of database accesses, or database round-trips.
+
+```csharp
+context.Books.Include(book => book.AuthorLink.Select(bookAuthor => bookAuthor.Author).
+```
+
+The only LINQ commands you can use in the Include or ThenInclude methods are***Where, OrderBy, OrderByDescending, ThenBy, ThenByDescending, Skip***, and ***Take***, but those commands are all you need for sorting and filtering.
+
+**SORTING AND FILTERING WHEN USING INCLUDE AND/OR THENINCLUDE**
+
+```csharp
+var firstBook = context.Books
+.Include(book => book.AuthorsLink
+.OrderBy(bookAuthor => bookAuthor.Order))
+.ThenInclude(bookAuthor => bookAuthor.Author)
+.Include(book => book.Reviews
+.Where(review => review.NumStars == 5))
+.Include(book => book.Promotion)
+.First();
+```
+
+**Explicit loading: Loading relationships after  the primary entity class**
+
+The second approach to loading data is explicit loading. After you’ve loaded the primary entity class, you can explicitly load any other relationships you want.
+
+```csharp
+var firstBook = context.Books.First();
+context.Entry(firstBook)
+.Collection(book => book.AuthorsLink).Load();
+foreach (var authorLink in firstBook.AuthorsLink)
+{
+context.Entry(authorLink)
+.Reference(bookAuthor =>
+bookAuthor.Author).Load();
+}
+context.Entry(firstBook)
+.Collection(book => book.Tags).Load();
+context.Entry(firstBook)
+.Reference(book => book.Promotion).Load();
+```
+
+```csharp
+ using (var context = new ApplicationDbContext())
+            {
+                var firstBook = context.Books.First();
+                var numReviews = context.Entry(firstBook)
+                    .Collection(book => book.Reviews)
+                    .Query().Count();
+                var starRatings = context.Entry(firstBook)
+                .Collection(book => book.Reviews)
+                .Query().Select(review => review.NumStars)
+                .ToList();
+          
+```
+
+The advantage of explicit loading is that you can load a relationship of an entity class later. I’ve found this technique useful when I’m using a library that loads only the primaryentity class, and need one of its relationships. Explicit loading can also be useful when you need that related data in only some circumstances. You might also find explicit loading to be useful in complex business logic because you can leave the job of loading the specific relationships to the parts of the business logic that need it.
+
 ### **Reading data from the database**
 
 ![1690038676618](image/readme/1690038676618.png)
@@ -107,11 +188,9 @@ EF Core uses Microsoft's .NET’s Language Integrated Query (LINQ) to carry the 
 
 The query db.Books.AsNoTracking().Include(book => book.Author) accesses the DbSet `<Book>` property in the application’s DbContext and adds a ***.Include(book => book.Author)*** at the end to ask that the Author parts of the relationship are loaded too. This is converted by the database provider into an SQL command to access the database. The resulting SQL is cached to avoid the cost of retranslation if the same database access is used again.
 
-
-
 ![1690039565366](image/readme/1690039565366.png)
 
-**The code to update the author’s WebUrl of the book Quantum Networking**
+**The code to update the author's WebUrl of the book Quantum Networking**
 
 ```csharp
 public static void ChangeWebUrl()
@@ -162,7 +241,7 @@ In the Summary display, you need to count the number of reviews and work out the
 
 ***MANY-TO-MANY RELATIONSHIP: MANUALLY CONFIGURED***
 
-*Books* can be written by one or more authors, and an author may write one or more books. Therefore, you need a table called Books to hold the books data and another table called Authors to hold the authors. The link between the ***Books** *and ***Authors* **tables is called a *many-to-many relationship*, which in this case needs a linking table to achieve this relationship.
+*Books* can be written by one or more authors, and an author may write one or more books. Therefore, you need a table called Books to hold the books data and another table called Authors to hold the authors. The link between the ***Books***and ***Authors***tables is called a *many-to-many relationship*, which in this case needs a linking table to achieve this relationship.
 In this case, you create your own linking table with an *Order* value in it because the names of the authors in a book must be displayed in a specific order
 
 ![1690070489201](image/readme/1690070489201.png)
@@ -178,7 +257,7 @@ table simpler. EF Core 5 and later can automatically create the many-to-many lin
 
 ![1690178630761](image/readme/1690178630761.png)
 
-The Books and Tags tables are created by you, and EF Core detects the many-to-many relationship between the Books table and the Tags table. 
+The Books and Tags tables are created by you, and EF Core detects the many-to-many relationship between the Books table and the Tags table.
 
 EF Core automatically creates the linking table needed to set up the many-to-many relationships.
 
@@ -188,7 +267,7 @@ The database diagram uses the same layout and terms :  ***PK*** means primary ke
 
 ![1690179852725](image/readme/1690179852725.png)
 
-The complete relational database schema for the Book App, showing all the tables and their columns used for holding the book information. You create classes to map to all the tables you see in this figure, apart from the ***BookTags** *table (shown as grayed out). EF Core created the ***BookTags* **table automatically when it found the direct ***many-to-many*** relationship between the Books and Tags tables.
+The complete relational database schema for the Book App, showing all the tables and their columns used for holding the book information. You create classes to map to all the tables you see in this figure, apart from the ***BookTags***table (shown as grayed out). EF Core created the ***BookTags***table automatically when it found the direct ***many-to-many*** relationship between the Books and Tags tables.
 
 #### ***The Book class, mapped to the Books table in the database***
 
@@ -219,10 +298,9 @@ AuthorsLink { get; set; }
 If you want to create specific constructors for any of your entity classes, you should be aware that EF Core may use your constructor when reading and creating
 an instance of an entity class.
 
-In the Book App, when I have navigational properties that are collections, I use the type** *ICollection `<T>`.*** I do so because the new eager loading sort capability
+In the Book App, when I have navigational properties that are collections, I use the type***ICollection `<T>`.*** I do so because the new eager loading sort capability
 
-can return a sorted collection, and the default HashSet definition says it holds only a collection “whose elements are in no particular order.” But there is a performance cost to not using ***HashSet** *when your navigational properties contain a large collection.
-
+can return a sorted collection, and the default HashSet definition says it holds only a collection “whose elements are in no particular order.” But there is a performance cost to not using ***HashSet***when your navigational properties contain a large collection.
 
 ***Creating an instance of the application's DbContext***
 
@@ -231,7 +309,6 @@ the application's DbContext by overriding its **OnConfiguring** method .You'll u
 ![1690181381655](image/readme/1690181381655.png)
 
 The application’s DbContext is the key class in accessing the database. This figure shows the main parts of an application's **DbContext**, starting with its inheriting EF Core's **DbContext**, which brings in lots of code and features. You have to add some properties with the class **DbSet `<T>`** that map your classes to a database table with the same name as the property name you use. The other parts are the constructor, which handles setting up the database options, and the **OnModelCreating** method, which you can override to add your own configuration commands and set up the database the way you want.
-
 
 ### Understanding database queries
 
@@ -253,7 +330,6 @@ which means that it hasn’t been executed on the data yet. EF Core can translat
 2. It’s enumerated by a collection operation such as ToArray, ToDictionary,
 3. ToList, ToListAsync, and so forth.
 4. LINQ operators such as First or Any are specified in the outermost part of the query.
-
 
    You’ll use certain EF Core commands, such as Load, in the explicit loading of a relationship later in this chapter.
 
