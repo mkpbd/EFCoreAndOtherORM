@@ -173,7 +173,7 @@ This table uses the foreign keys as the primary keys. Because primary keys must 
 
 ***MANY-TO-MANY RELATIONSHIP: AUTOCONFIGURED BY EF CORE***
 
-Books can be tagged with different categories. A category might be applied to multiple books, and a book might have one or more categories, so a** *many-to-many*** linking table is needed. But unlike in the previous BookAuthor linking table, the tags don't have to be ordered, which makes the linking
+**Books** can be tagged with different categories. A category might be applied to multiple books, and a book might have one or more categories, so a ***many-to-many*** linking table is needed. But unlike in the previous BookAuthor linking table, the tags don't have to be ordered, which makes the linking
 table simpler. EF Core 5 and later can automatically create the many-to-many linking table for you shows your database with the automatic BookTag table that provides a  ***many-to-many*** link between the Books table and the Tags table
 
 ![1690178630761](image/readme/1690178630761.png)
@@ -181,6 +181,57 @@ table simpler. EF Core 5 and later can automatically create the many-to-many lin
 The Books and Tags tables are created by you, and EF Core detects the many-to-many relationship between the Books table and the Tags table. 
 
 EF Core automatically creates the linking table needed to set up the many-to-many relationships.
+
+***The database showing all the tables***
+
+The database diagram uses the same layout and terms :  ***PK*** means primary key, and **FK** means foreign key.
+
+![1690179852725](image/readme/1690179852725.png)
+
+The complete relational database schema for the Book App, showing all the tables and their columns used for holding the book information. You create classes to map to all the tables you see in this figure, apart from the ***BookTags** *table (shown as grayed out). EF Core created the ***BookTags* **table automatically when it found the direct ***many-to-many*** relationship between the Books and Tags tables.
+
+#### ***The Book class, mapped to the Books table in the database***
+
+```csharp
+public class Book
+{
+public int BookId { get; set; }
+public string Title { get; set; }
+public string Description { get; set; }
+public DateTime PublishedOn { get; set; }
+public string Publisher { get; set; }
+public decimal Price { get; set; }
+public string ImageUrl { get; set; }
+//-----------------------------------------------
+//relationships
+public PriceOffer Promotion { get; set; }
+public ICollection<Review> Reviews { get; set; }
+public ICollection<Tag> Tags { get; set; }
+public ICollection<BookAuthor>
+AuthorsLink { get; set; }
+}
+```
+
+![1690180856402](image/readme/1690180856402.png)
+
+![1690180861983](image/readme/1690180861983.png)
+
+If you want to create specific constructors for any of your entity classes, you should be aware that EF Core may use your constructor when reading and creating
+an instance of an entity class.
+
+In the Book App, when I have navigational properties that are collections, I use the type** *ICollection `<T>`.*** I do so because the new eager loading sort capability
+
+can return a sorted collection, and the default HashSet definition says it holds only a collection “whose elements are in no particular order.” But there is a performance cost to not using ***HashSet** *when your navigational properties contain a large collection.
+
+
+***Creating an instance of the application's DbContext***
+
+the application's DbContext by overriding its **OnConfiguring** method .You'll use a method that provides that database via the application's DbContext constructor.
+
+![1690181381655](image/readme/1690181381655.png)
+
+The application’s DbContext is the key class in accessing the database. This figure shows the main parts of an application's **DbContext**, starting with its inheriting EF Core's **DbContext**, which brings in lots of code and features. You have to add some properties with the class **DbSet `<T>`** that map your classes to a database table with the same name as the property name you use. The other parts are the constructor, which handles setting up the database options, and the **OnModelCreating** method, which you can override to add your own configuration commands and set up the database the way you want.
+
 
 ### Understanding database queries
 
@@ -202,7 +253,6 @@ which means that it hasn’t been executed on the data yet. EF Core can translat
 2. It’s enumerated by a collection operation such as ToArray, ToDictionary,
 3. ToList, ToListAsync, and so forth.
 4. LINQ operators such as First or Any are specified in the outermost part of the query.
-
 
 
    You’ll use certain EF Core commands, such as Load, in the explicit loading of a relationship later in this chapter.
