@@ -125,7 +125,6 @@ the modeling steps that EF Core uses on our AppDbContext, which happens the firs
 
 #### Reading data from the database
 
-
 Reads All Books and Authors
 
 ```csharp
@@ -194,3 +193,29 @@ INNER JOIN [Author] AS [a] ON
 ```
 
 ![1690270519116](image/readme/1690270519116.png)
+
+#### The execute command
+
+EF Core can translate an expression tree into the correct commands for the database you’re using. In EF Core, a query is executed against the database when
+
+1. It's enumerated by a foreach statement.
+2. It's enumerated by a collection operation such as **ToArray, ToDictionary, ToList, ToListAsync**, and so forth.
+3. LINQ operators such as First or Any are specified in the outermost part of the query
+
+You'll use certain EF Core commands, such as Load, in the explicit loading of a relationship later in this chapter.
+
+#### The two types of database queries
+
+The other type of query is an **AsNoTracking** query, also known as a **read-only query**. This query has the EF Core’s **AsNoTracking** method added to the LINQ query.
+
+As well as making the query **read-only**, the **AsNoTracking** method improves the performance of the query by turning off certain EF Core features.
+
+```csharp
+context.Books.AsNoTracking().Where(p => p.Title.StartsWith("Quantum")).ToList();
+```
+
+provides a detailed list of the differences between the normal, **read-write** query and the **AsNoTracking**, read-only query.
+
+#### Eager loading: Loading relationships with the primary entity class
+
+The first approach to loading related data is eager loading, which entails telling EF Core to load the relationship in the same query that loads the primary entity class. Eager loading is specified via two fluent methods, **Include and ThenInclude**. The next listing shows the loading of the first row of the Books table as an instance of the Book entity class and the eager loading of the single relationship, Reviews.

@@ -48,5 +48,15 @@ namespace EFCoreSecondConsoleApp.DataForFrontend
             ListAll();
         }
 
+        public static void TheTwoTypesOfDatabaseQuerys()
+        {
+            using(var context = new ApplicationDbContext())
+            {
+                context.Books.AsNoTracking().Where(p => p.Title.StartsWith("Quantum")).ToList();
+            }
+        }
+
+
+
     }
 }
