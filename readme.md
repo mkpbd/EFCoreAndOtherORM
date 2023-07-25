@@ -243,3 +243,34 @@ LIMIT 1
 LEFT JOIN "Review" AS "r" ON "t"."BookId" = "r"."BookId"
 ORDER BY "t"."BookId", "r"."ReviewId"
 ```
+
+#### Eager loading of the Book class and all the related data
+
+```csharp
+var firstBook = context.Books
+.Include(book => book.AuthorsLink)
+.ThenInclude(bookAuthor => bookAuthor.Author)
+.Include(book => book.Reviews)
+.Include(book => book.Tags)
+.Include(book => book.Promotion)
+.FirstOrDefault();
+```
+
+![1690297898109](image/readme/1690297898109.png)
+
+The listing shows the use of the eager-loading method **Include** to get the Authors-Link relationship. This relationship is a first-level relationship, referred to directly from the entity class you're loading. That **Include** is followed by **ThenInclude** to load
+the second-level relationship—in this case, the Author table at the other end of the linking table, **BookAuthor**. This pattern, **Include** followed by **ThenInclude**, is the  standard way of accessing relationships that go deeper than a first-level relationship.
+You can go to any depth with multiple **ThenIncludes**, one after the other.
+
+If you use the direct linking of **many-to-many** relationships **introduced** in EF Core you don't need **ThenInclude** to load the second-level relationship because the property directly accesses the other end of the **many-to-many** relationship via the Tags
+property, which is of type **ICollection `<Tag>`.**
+
+Eager loading in EF Core is similar to that in EF6.x, but EF6.x doesn't have a ThenInclude method.
+
+```csharp
+context.Books.Include(book => book.AuthorLink.Select(bookAuthor => bookAuthor.Author).
+```
+
+The same rule applies to ThenInclude: if the previous **Include** or **ThenInclude** was empty, subsequent **ThenIncludes** are ignored. If you don't **Include** a collection, it is null by default.
+
+**SORTING AND FILTERING WHEN USING INCLUDE AND/OR THENINCLUDE**

@@ -14,5 +14,7 @@ namespace EFCoreSecondConsoleApp.Models
         public ICollection<Book> Books { get; set; }
         public int AuthorId { get;  set; }
         public ICollection<Author> Authors { get; set; }
+
+        public int Order { get; set; }
     }
 }

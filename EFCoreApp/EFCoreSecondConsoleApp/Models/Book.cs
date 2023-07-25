@@ -20,5 +20,7 @@ namespace EFCoreSecondConsoleApp.Models
 
         public ICollection<Tag> Tags { get; set; }
         public ICollection<Promotion> Promotion { get; set; }
+
+        public List<BookAuthor> bookAuthors { get; set; }
     }
 }

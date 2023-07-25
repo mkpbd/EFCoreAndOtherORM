@@ -67,5 +67,37 @@ namespace EFCoreSecondConsoleApp.DataForFrontend
             }
         }
 
+
+        public static void EagerLoadingOfTheBookClassAndAllTheRelatedData()
+        {
+            using( var context = new ApplicationDbContext())
+            {
+                var firstBook = context.Books
+                //.Include(book => book.AuthorsLink)
+                //.ThenInclude(bookAuthor => bookAuthor.Author)
+                .Include(bookAuthor => bookAuthor.Author)
+                .Include(book => book.Reviews)
+                .Include(book => book.Tags)
+                .Include(book => book.Promotion)
+                .FirstOrDefault();
+            }
+
+        }
+
+        public static void SortingAndFilteringWhenUsingIncludeOrThenInclude()
+        {
+            using(var context = new ApplicationDbContext())
+            {
+                var firstBook = context.Books
+            .Include(book => book.bookAuthors
+            .OrderBy(bookAuthor => bookAuthor.Order))
+            .ThenInclude(bookAuthor => bookAuthor.Authors)
+            .Include(book => book.Reviews
+            .Where(review => review.NumStars == 5))
+            .Include(book => book.Promotion)
+            .First();
+            }
+        }
+
     }
 }
