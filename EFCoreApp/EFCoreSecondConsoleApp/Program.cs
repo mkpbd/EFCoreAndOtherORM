@@ -1,10 +1,12 @@
-﻿namespace EFCoreSecondConsoleApp
+﻿using EFCoreSecondConsoleApp.DataForFrontend;
+
+namespace EFCoreSecondConsoleApp
 {
     internal class Program
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello, World!");
+            BookAndAutherData.ListAll();
         }
     }
 }

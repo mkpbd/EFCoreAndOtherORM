@@ -11,7 +11,7 @@ namespace EFCoreSecondConsoleApp.Data
 {
     public class ApplicationDbContext: DbContext
     {
-        private string connection = @"Server=SERVER\MSSQLSERVER01;Database=EFCoreDB;Trusted_Connection=True;";
+        private string connection = @"Server=SERVER\MSSQLSERVER01;Database=EFCoreDB;Trusted_Connection=True;TrustServerCertificate=True";
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlServer(connection);

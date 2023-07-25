@@ -124,3 +124,73 @@ EF Core will create a model of the database your classes map to. First, it looks
 the modeling steps that EF Core uses on our AppDbContext, which happens the first time you create an instance of the AppDbContext.
 
 #### Reading data from the database
+
+
+Reads All Books and Authors
+
+```csharp
+ using (var db = new ApplicationDbContext())
+            {
+                foreach (var book in
+                db.Books.AsNoTracking()
+                .Include(book => book.Author))
+                {
+                    var webUrl = book.Author.WebUrl == null
+                    ? "- no web URL given -"
+                    : book.Author.WebUrl;
+                    Console.WriteLine(
+                    $"{book.Title} by {book.Author.Name}");
+                    Console.WriteLine(" " +
+                    "Published on " +
+                    $"{book.PublishedOn:dd-MMM-yyyy}" +
+                    $". {webUrl}");
+                }
+            }
+```
+
+![1690269123895](image/readme/1690269123895.png)
+
+EF Core uses Microsoft’s .NET’s Language Integrated Query (LINQ) to carry the commands it wants done, and normal .NET classes to hold the data.
+
+The query **db.Books.AsNoTracking().Include(book => book.Author)** accesses the *DbSet `<Book>`* property in the application's **DbContext** and adds a .Include
+**(book => book.Author)** at the end to ask that the Author parts of the relationship are loaded too. This is converted by the database provider into an SQL command to access the database. The resulting SQL is cached to avoid the cost of retranslation if the same database access is used again
+
+![1690269695510](image/readme/1690269695510.png)
+
+**SQL command produced to read Books and Author**
+
+```csharp
+SELECT [b].[BookId],
+[b].[AuthorId],
+[b].[Description],
+[b].[PublishedOn],
+[b].[Title],
+[a].[AuthorId],
+[a].[Name],
+[a].[WebUrl]
+FROM [Books] AS [b]
+INNER JOIN [Author] AS [a] ON
+[b].[AuthorId] = [a].[AuthorId]
+```
+
+**The code to update the author's WebUrl of the book Quantum Networking**
+
+```csharp
+ public static void ChangeWebUrl()
+        {
+            Console.Write("New Quantum Networking WebUrl > ");
+            var newWebUrl = Console.ReadLine();
+            using (var db = new ApplicationDbContext())
+            {
+                var singleBook = db.Books
+                .Include(book => book.Author)
+                .Single(book => book.Title == "Quantum Networking");
+                singleBook.Author.WebUrl = newWebUrl;
+                db.SaveChanges();
+                Console.WriteLine("... SavedChanges called.");
+            }
+            ListAll();
+        }
+```
+
+![1690270519116](image/readme/1690270519116.png)
