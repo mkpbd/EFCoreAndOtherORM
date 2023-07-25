@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using EFCoreSecondConsoleApp.DataSeeding;
+using EFCoreSecondConsoleApp.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +20,12 @@ namespace EFCoreSecondConsoleApp.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.ApplyConfiguration(new AuthorDataSeedingConfiguration());
+            modelBuilder.ApplyConfiguration(new ConfigurationBookData());
             base.OnModelCreating(modelBuilder);
         }
+
+        public DbSet<Book> Books { get; set; }
+        public DbSet<Author> Author { get; set; }
     }
 }
