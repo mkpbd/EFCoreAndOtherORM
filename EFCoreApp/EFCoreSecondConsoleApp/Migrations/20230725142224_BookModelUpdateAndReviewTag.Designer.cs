@@ -4,6 +4,7 @@ using EFCoreSecondConsoleApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EFCoreSecondConsoleApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230725142224_BookModelUpdateAndReviewTag")]
+    partial class BookModelUpdateAndReviewTag
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,21 +24,6 @@ namespace EFCoreSecondConsoleApp.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("BookPromotion", b =>
-                {
-                    b.Property<int>("BooksBookId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PromotionId")
-                        .HasColumnType("int");
-
-                    b.HasKey("BooksBookId", "PromotionId");
-
-                    b.HasIndex("PromotionId");
-
-                    b.ToTable("BookPromotion");
-                });
 
             modelBuilder.Entity("BookTag", b =>
                 {
@@ -185,28 +173,6 @@ namespace EFCoreSecondConsoleApp.Migrations
                     b.ToTable("BookAuthor");
                 });
 
-            modelBuilder.Entity("EFCoreSecondConsoleApp.Models.Promotion", b =>
-                {
-                    b.Property<int>("PromotionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PromotionId"));
-
-                    b.Property<int>("BookId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PromotionType")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PromssionPrice")
-                        .HasColumnType("int");
-
-                    b.HasKey("PromotionId");
-
-                    b.ToTable("Promotion");
-                });
-
             modelBuilder.Entity("EFCoreSecondConsoleApp.Models.Review", b =>
                 {
                     b.Property<int>("ReviewId")
@@ -256,21 +222,6 @@ namespace EFCoreSecondConsoleApp.Migrations
                     b.HasKey("TagId");
 
                     b.ToTable("Tags");
-                });
-
-            modelBuilder.Entity("BookPromotion", b =>
-                {
-                    b.HasOne("EFCoreSecondConsoleApp.Models.Book", null)
-                        .WithMany()
-                        .HasForeignKey("BooksBookId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("EFCoreSecondConsoleApp.Models.Promotion", null)
-                        .WithMany()
-                        .HasForeignKey("PromotionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("BookTag", b =>

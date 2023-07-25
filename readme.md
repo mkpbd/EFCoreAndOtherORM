@@ -219,3 +219,27 @@ provides a detailed list of the differences between the normal, **read-write** q
 #### Eager loading: Loading relationships with the primary entity class
 
 The first approach to loading related data is eager loading, which entails telling EF Core to load the relationship in the same query that loads the primary entity class. Eager loading is specified via two fluent methods, **Include and ThenInclude**. The next listing shows the loading of the first row of the Books table as an instance of the Book entity class and the eager loading of the single relationship, Reviews.
+
+```csharp
+var firstBook = context.Books
+.Include(book => book.Reviews)
+.FirstOrDefault();
+```
+
+![1690294196205](image/readme/1690294196205.png)
+
+```csharp
+
+SELECT "t"."BookId", "t"."Description", "t"."ImageUrl",
+"t"."Price", "t"."PublishedOn", "t"."Publisher",
+"t"."Title", "r"."ReviewId", "r"."BookId",
+"r"."Comment", "r"."NumStars", "r"."VoterName"
+FROM (
+SELECT "b"."BookId", "b"."Description", "b"."ImageUrl",
+"b"."Price", "b"."PublishedOn", "b"."Publisher", "b"."Title"
+FROM "Books" AS "b"
+LIMIT 1
+) AS "t"
+LEFT JOIN "Review" AS "r" ON "t"."BookId" = "r"."BookId"
+ORDER BY "t"."BookId", "r"."ReviewId"
+```

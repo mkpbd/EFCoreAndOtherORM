@@ -57,6 +57,15 @@ namespace EFCoreSecondConsoleApp.DataForFrontend
         }
 
 
+        public static void EagerLoadingOfFirstBookWithCorrespondingReviews()
+        {
+            using(var context = new ApplicationDbContext())
+            {
+                var firstBook = context.Books
+                .Include(book => book.Reviews)
+                .FirstOrDefault();
+            }
+        }
 
     }
 }

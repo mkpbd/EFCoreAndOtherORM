@@ -14,5 +14,11 @@ namespace EFCoreSecondConsoleApp.Models
         public DateTime PublishedOn { get; set; }
         public int AuthorId { get; set; }
         public Author Author { get; set; }
+
+
+        public ICollection<Review> Reviews { get; set; }
+
+        public ICollection<Tag> Tags { get; set; }
+        public ICollection<Promotion> Promotion { get; set; }
     }
 }
