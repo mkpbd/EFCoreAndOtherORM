@@ -409,3 +409,119 @@ Complex Query Bundding
 ![1690332943605](image/readme/1690332943605.png)
 
 Each individual query needed to build the book list display, with each part of the query that’s used to provide the value needed for that part of the book display. Some queries are easy, such as getting the title of the book, but others aren’t so obvious, such as working out the average votes from the reviews.
+
+#### Data Transfer Object
+
+```csharp
+public class BookListDto
+    {
+        public int BookId { get; set; }
+        public string Title { get; set; }
+        public DateTime PublishedOn { get; set; }
+        public decimal Price { get; set; }
+        public decimal ActualPrice { get; set; }
+        public string PromotionPromotionalText { get; set; }
+        public string AuthorsOrdered { get; set; }
+        public int ReviewsCount { get; set; }
+        public double?   ReviewsAverageVotes  { get; set; }
+        public string[] TagStrings { get; set; }
+    }
+```
+
+![1690333531839](image/readme/1690333531839.png)
+
+Using Extension Method  DTO To Model Data transfer
+
+```csharp
+public static IQueryable<BookListDto> MapBookToDto(this IQueryable<Book> books)
+        {
+            return books.Select(book => new BookListDto
+            {
+                BookId = book.BookId,
+                Title = book.Title,
+                Price = book.Price,
+                PublishedOn = book.PublishedOn,
+
+                ActualPrice = book.Promotion == null
+                ? book.Price
+                : book.Promotion.NewPrice,
+
+                PromotionPromotionalText = book.Promotion == null ? null
+                : book.Promotion.PromotionalText,
+
+                AuthorsOrdered = string.Join(", ",
+                book.bookAuthors.OrderBy(ba => ba.Order).Select(ba => ba.Author.Name)),
+
+                ReviewsCount = book.Reviews.Count,
+                ReviewsAverageVotes = book.Reviews.Select(review => (double?)review.NumStars).Average(),
+
+                TagStrings = book.Tags.Select(x => x.TagId.ToString()).ToArray(),
+            });
+        }
+```
+
+![1690335023711](image/readme/1690335023711.png)
+
+**Sorting books by price, publication date, and customer ratings**
+
+```csharp
+public static IQueryable<BookListDto> OrderBooksBy (this IQueryable<BookListDto> books, OrderByOptions orderByOptions)
+        {
+            switch (orderByOptions)
+            {
+                case OrderByOptions.SimpleOrder:
+                    return books.OrderByDescending(
+                    x => x.BookId);
+                case OrderByOptions.ByVotes:
+                    return books.OrderByDescending(x =>
+                    x.ReviewsAverageVotes);
+                case OrderByOptions.ByPublicationDate:
+                    return books.OrderByDescending(
+                    x => x.PublishedOn);
+                case OrderByOptions.ByPriceLowestFirst:
+                    return books.OrderBy(x => x.ActualPrice);
+                case OrderByOptions.ByPriceHighestFirst:
+                    return books.OrderByDescending(
+                    x => x.ActualPrice);
+                default:
+                    throw new ArgumentOutOfRangeException(
+                    nameof(orderByOptions), orderByOptions, null);
+            }
+        }
+
+```
+
+![1690338365568](image/readme/1690338365568.png)
+
+Filtering by Query Object
+
+```csharp
+public static IQueryable<BookListDto> FilterBooksBy(this IQueryable<BookListDto> books,
+                        BooksFilterBy filterBy, string filterValue)
+        {
+            if (string.IsNullOrEmpty(filterValue))
+                return books;
+            switch (filterBy)
+            {
+                case BooksFilterBy.NoFilter:
+                    return books;
+                case BooksFilterBy.ByVotes:
+                    var filterVote = int.Parse(filterValue);
+                    return books.Where(x => x.ReviewsAverageVotes > filterVote);
+                case BooksFilterBy.ByTags:
+                    return books.Where(x => x.TagStrings.Any(y => y == filterValue));
+                case BooksFilterBy.ByPublicationYear:
+                    if (filterValue == "AllBooksNotPublishedString")
+                        return books.Where(x => x.PublishedOn > DateTime.UtcNow);
+                    var filterYear = int.Parse(filterValue);
+                    return books.Where(
+                    x => x.PublishedOn.Year == filterYear
+                    && x.PublishedOn <= DateTime.UtcNow);
+                default:
+                    throw new ArgumentOutOfRangeException
+                    (nameof(filterBy), filterBy, null);
+            }
+        }
+```
+
+![1690338768071](image/readme/1690338768071.png)
