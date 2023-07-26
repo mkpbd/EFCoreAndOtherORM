@@ -403,3 +403,9 @@ FROM "Books" AS "b"
 ![1690332283329](image/readme/1690332283329.png)
 
 ![1690332454837](image/readme/1690332454837.png)
+
+Complex Query Bundding
+
+![1690332943605](image/readme/1690332943605.png)
+
+Each individual query needed to build the book list display, with each part of the query that’s used to provide the value needed for that part of the book display. Some queries are easy, such as getting the title of the book, but others aren’t so obvious, such as working out the average votes from the reviews.

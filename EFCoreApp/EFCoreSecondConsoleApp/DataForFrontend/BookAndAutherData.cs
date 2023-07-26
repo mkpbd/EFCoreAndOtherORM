@@ -155,7 +155,7 @@ namespace EFCoreSecondConsoleApp.DataForFrontend
 
         public static void SelectQueryThatIncludesANonSQLCommandStringJoin()
         {
-            using(var context = new ApplicationDbContext())
+            using (var context = new ApplicationDbContext())
             {
                 var firstBook = context.Books
                 .Select(book => new
