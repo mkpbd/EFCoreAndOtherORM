@@ -1,4 +1,5 @@
 ﻿using EFCoreSecondConsoleApp.DataForFrontend;
+using EFCoreSecondConsoleApp.Services;
 
 namespace EFCoreSecondConsoleApp
 {
@@ -6,7 +7,11 @@ namespace EFCoreSecondConsoleApp
     {
         static void Main(string[] args)
         {
-            BookAndAutherData.ListAll();
+            //BookAndAutherData.ListAll();
+
+            ExampleService exampleService = new ExampleService();
+            exampleService.ExampleSaveEntry();
+
         }
     }
 }

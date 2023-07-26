@@ -591,7 +591,6 @@ public class ListBooksService
 
 ![1690341031852](image/readme/1690341031852.png)
 
-
 #### EF Core's entity State
 
 EF Core's entity property, called State. This property provides another look under the hood at the way EF Core does things, which helps you understand what's going on when you ***add, update, or delete*** entities.
@@ -608,10 +607,27 @@ The State tells EF Core what to do with this instance when SaveChanges is called
 
 **DEFINITION** Tracked entities are entity instances that have been read in from the database by using a query that didn’t include the AsNoTracking method. Alternatively, after an entity instance has been used as a parameter to EF Core methods (such as **Add, Update, or Delete**), it becomes tracked
 
-
 #### Creating a single entity on its own
 
 Let's start with an entity class that has no navigational properties—that is, relationships to other tables in your database. This example is rare but shows the two steps in a create operation:
 
 1 Add the entity to the application’s DbContext.
 2 Call the application’s DbContext’s SaveChanges method.
+
+```csharp
+public void ExampleSaveEntry()
+        {
+            try
+            {
+                var items = new ExampleEntity { Name = "Test One" };
+
+                _context.Add(items);
+                _context.SaveChanges();
+                Console.WriteLine("Data has been Save");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Data not save");
+            }
+        }
+```
