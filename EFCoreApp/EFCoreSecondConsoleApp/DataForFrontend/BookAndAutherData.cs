@@ -50,7 +50,7 @@ namespace EFCoreSecondConsoleApp.DataForFrontend
 
         public static void TheTwoTypesOfDatabaseQuerys()
         {
-            using(var context = new ApplicationDbContext())
+            using (var context = new ApplicationDbContext())
             {
                 context.Books.AsNoTracking().Where(p => p.Title.StartsWith("Quantum")).ToList();
             }
@@ -59,7 +59,7 @@ namespace EFCoreSecondConsoleApp.DataForFrontend
 
         public static void EagerLoadingOfFirstBookWithCorrespondingReviews()
         {
-            using(var context = new ApplicationDbContext())
+            using (var context = new ApplicationDbContext())
             {
                 var firstBook = context.Books
                 .Include(book => book.Reviews)
@@ -70,7 +70,7 @@ namespace EFCoreSecondConsoleApp.DataForFrontend
 
         public static void EagerLoadingOfTheBookClassAndAllTheRelatedData()
         {
-            using( var context = new ApplicationDbContext())
+            using (var context = new ApplicationDbContext())
             {
                 var firstBook = context.Books
                 //.Include(book => book.AuthorsLink)
@@ -86,7 +86,7 @@ namespace EFCoreSecondConsoleApp.DataForFrontend
 
         public static void SortingAndFilteringWhenUsingIncludeOrThenInclude()
         {
-            using(var context = new ApplicationDbContext())
+            using (var context = new ApplicationDbContext())
             {
                 var firstBook = context.Books
             .Include(book => book.bookAuthors
@@ -99,5 +99,77 @@ namespace EFCoreSecondConsoleApp.DataForFrontend
             }
         }
 
+
+        public static void ExplicitLoadingOfTheBookClassAndRelatedData()
+        {
+            using (var context = new ApplicationDbContext())
+            {
+                var firstBook = context.Books.First();
+                context.Entry(firstBook)
+                .Collection(book => book.bookAuthors).Load();
+                foreach (var authorLink in firstBook.bookAuthors)
+                {
+                    context.Entry(authorLink)
+                    .Reference(bookAuthor =>
+                    bookAuthor.Authors).Load();
+                }
+
+                context.Entry(firstBook)
+                .Collection(book => book.Tags).Load();
+                context.Entry(firstBook)
+                .Reference(book => book.Promotion).Load();
+            }
+        }
+        public static void ExplicitingLoadingOfBookClassWithRedinedSetOfRelatedData()
+        {
+            using (var context = new ApplicationDbContext())
+            {
+                var firstBook = context.Books.First();
+                var numReviews = context.Entry(firstBook)
+                .Collection(book => book.Reviews)
+                .Query().Count();
+
+                var starRatings = context.Entry(firstBook)
+                .Collection(book => book.Reviews)
+                .Query().Select(review => review.NumStars)
+                .ToList();
+            }
+        }
+
+        public static void SelectOfTheBookClassPickingSpecificProperticsAndOneCalculation()
+        {
+            using (var context = new ApplicationDbContext())
+            {
+                var books = context.Books
+                .Select(book => new
+                {
+                    book.Title,
+                    book.Price,
+                    NumReviews
+                = book.Reviews.Count,
+                }
+                ).ToList();
+
+            }
+        }
+
+        public static void SelectQueryThatIncludesANonSQLCommandStringJoin()
+        {
+            using(var context = new ApplicationDbContext())
+            {
+                var firstBook = context.Books
+                .Select(book => new
+                {
+                    book.BookId,
+                    book.Title,
+                    AuthorsString = string.Join(", ",
+                book.bookAuthors
+                .OrderBy(ba => ba.Order)
+                .Select(ba => ba.Author.Name))
+                }
+                ).First();
+
+            }
+        }
     }
 }

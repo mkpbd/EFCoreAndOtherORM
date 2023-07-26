@@ -274,3 +274,132 @@ context.Books.Include(book => book.AuthorLink.Select(bookAuthor => bookAuthor.Au
 The same rule applies to ThenInclude: if the previous **Include** or **ThenInclude** was empty, subsequent **ThenIncludes** are ignored. If you don't **Include** a collection, it is null by default.
 
 **SORTING AND FILTERING WHEN USING INCLUDE AND/OR THENINCLUDE**
+
+The only LINQ commands you can use in the **Include or ThenInclude** methods are **Where, OrderBy, OrderByDescending, ThenBy, ThenByDescending, Skip, and Take**, but those commands are all you need for sorting and filtering
+
+```csharp
+var firstBook = context.Books
+.Include(book => book.AuthorsLink
+.OrderBy(bookAuthor => bookAuthor.Order))
+.ThenInclude(bookAuthor => bookAuthor.Author)
+.Include(book => book.Reviews
+.Where(review => review.NumStars == 5))
+.Include(book => book.Promotion)
+.First();
+```
+
+![1690328493329](image/readme/1690328493329.png)
+
+#### Explicit loading: Loading relationships after the primary entity class
+
+The second approach to loading data is explicit loading. After you’ve loaded the primary entity class, you can explicitly load any other relationships you want. First, it loads the Book; then it uses explicit-loading commands to read all the relationships.
+
+```csharp
+public static void ExplicitLoadingOfTheBookClassAndRelatedData()
+        {
+            using (var context = new ApplicationDbContext())
+            {
+                var firstBook = context.Books.First();
+                context.Entry(firstBook)
+                .Collection(book => book.bookAuthors).Load();
+                foreach (var authorLink in firstBook.bookAuthors)
+                {
+                    context.Entry(authorLink)
+                    .Reference(bookAuthor =>
+                    bookAuthor.Authors).Load();
+                }
+
+                context.Entry(firstBook)
+                .Collection(book => book.Tags).Load();
+                context.Entry(firstBook)
+                .Reference(book => book.Promotion).Load();
+            }
+        }
+```
+
+![1690328928097](image/readme/1690328928097.png)
+
+Alternatively, explicit loading can be used to apply a query to the relationship instead of loading the relationship. the use of the explicit-loading method Query to obtain the count of reviews and to load the star ratings of each review. You
+can use any standard LINQ command after the **Query method, such as Where or OrderBy.**
+
+```csharp
+    public static void ExplicitingLoadingOfBookClassWithRedinedSetOfRelatedData()
+        {
+            using (var context = new ApplicationDbContext())
+            {
+                var firstBook = context.Books.First();
+                var numReviews = context.Entry(firstBook)
+                .Collection(book => book.Reviews)
+                .Query().Count();
+
+                var starRatings = context.Entry(firstBook)
+                .Collection(book => book.Reviews)
+                .Query().Select(review => review.NumStars)
+                .ToList();
+            }
+        }
+```
+
+The advantage of explicit loading is that you can load a relationship of an entity class later. I’ve found this technique useful when I’m using a library that loads only the primary entity class, and need one of its relationships. Explicit loading can also be useful when you need that related data in only some circumstances.
+
+#### **Select loading: Loading specific parts of primary entity class and any relationships**
+
+The third approach to loading data is using the LINQ **Select method** to pick out the data you want, which I call select loading. The next listing shows the use of the Select method to select a few standard properties from the Book class and execute specific code inside the query to get the count of customer reviews for this book.
+
+```csharp
+     public static void SelectOfTheBookClassPickingSpecificProperticsAndOneCalculation()
+        {
+            using (var context = new ApplicationDbContext())
+            {
+                var books = context.Books
+                .Select(book => new
+                {
+                    book.Title,
+                    book.Price,
+                    NumReviews
+                = book.Reviews.Count,
+                }
+                ).ToList();
+
+            }
+        }
+```
+
+![1690330253878](image/readme/1690330253878.png)
+
+The advantage of this approach is that only the data you need is loaded, which can be more efficient if you don’t need all the data. SQL SELECT command is required to get all that data, which is also efficient in terms of database round trips. EF Core turns the p.Reviews.Count part of the query into an SQL command, so that count is done inside the database, as you can see in the following snippet of the SQL created by EF Core:
+
+```csharp
+SELECT "b"."Title", "b"."Price", (
+SELECT COUNT(*)
+FROM "Review" AS "r"
+WHERE "b"."BookId" = "r"."BookId") AS "NumReviews"
+FROM "Books" AS "b"
+```
+
+**Select query that includes a non-SQL command, string.Join**
+
+```csharp
+ public static void SelectQueryThatIncludesANonSQLCommandStringJoin()
+        {
+            using (var context = new ApplicationDbContext())
+            {
+                var firstBook = context.Books
+                .Select(book => new
+                {
+                    book.BookId,
+                    book.Title,
+                    AuthorsString = string.Join(", ",
+                book.bookAuthors
+                .OrderBy(ba => ba.Order)
+                .Select(ba => ba.Author.Name))
+                }
+                ).First();
+
+            }
+        }
+```
+
+![1690332283329](image/readme/1690332283329.png)
+
+![1690332454837](image/readme/1690332454837.png)
