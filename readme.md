@@ -590,3 +590,28 @@ public class ListBooksService
 ```
 
 ![1690341031852](image/readme/1690341031852.png)
+
+
+#### EF Core's entity State
+
+EF Core's entity property, called State. This property provides another look under the hood at the way EF Core does things, which helps you understand what's going on when you ***add, update, or delete*** entities.
+
+Any entity class instance has a State, which can be accessed via the following EF Core command: ***context.Entry(someEntityInstance).State***.
+
+The State tells EF Core what to do with this instance when SaveChanges is called. Here’s a list of the possible states and what happens if SaveChanges is called:
+
+1. **Added**—The entity needs to be created in the database. SaveChanges inserts it.
+2. **Unchanged**—The entity exists in the database and hasn’t been modified on the client. SaveChanges ignores it.
+3. **Modified**—The entity exists in the database and has been modified on the client. SaveChanges updates it.
+4. **Deleted**—The entity exists in the database but should be deleted. SaveChanges deletes it.
+5. **Detached**—The entity you provided isn't tracked. SaveChanges doesn't see it.
+
+**DEFINITION** Tracked entities are entity instances that have been read in from the database by using a query that didn’t include the AsNoTracking method. Alternatively, after an entity instance has been used as a parameter to EF Core methods (such as **Add, Update, or Delete**), it becomes tracked
+
+
+#### Creating a single entity on its own
+
+Let's start with an entity class that has no navigational properties—that is, relationships to other tables in your database. This example is rare but shows the two steps in a create operation:
+
+1 Add the entity to the application’s DbContext.
+2 Call the application’s DbContext’s SaveChanges method.

@@ -25,6 +25,7 @@ namespace EFCoreSecondConsoleApp.Data
             base.OnModelCreating(modelBuilder);
         }
 
+        public DbSet<ExampleEntity> ExampleEntities { get; set; }
         public DbSet<Book> Books { get; set; }
         public DbSet<Author> Author { get; set; }
         public DbSet<Review> Reviews { get; set; }

@@ -22,36 +22,6 @@ namespace EFCoreSecondConsoleApp.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("BookBookAuthor", b =>
-                {
-                    b.Property<int>("BooksBookId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("bookAuthorsBookAuthorId")
-                        .HasColumnType("int");
-
-                    b.HasKey("BooksBookId", "bookAuthorsBookAuthorId");
-
-                    b.HasIndex("bookAuthorsBookAuthorId");
-
-                    b.ToTable("BookBookAuthor");
-                });
-
-            modelBuilder.Entity("BookPromotion", b =>
-                {
-                    b.Property<int>("BooksBookId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PromotionId")
-                        .HasColumnType("int");
-
-                    b.HasKey("BooksBookId", "PromotionId");
-
-                    b.HasIndex("PromotionId");
-
-                    b.ToTable("BookPromotion");
-                });
-
             modelBuilder.Entity("BookTag", b =>
                 {
                     b.Property<int>("BooksBookId")
@@ -124,23 +94,31 @@ namespace EFCoreSecondConsoleApp.Migrations
                     b.Property<int>("AuthorId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("BookAuthorId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Price")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PromotionId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("PublishedOn")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Title")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("BookId");
 
                     b.HasIndex("AuthorId");
+
+                    b.HasIndex("BookAuthorId");
+
+                    b.HasIndex("PromotionId");
 
                     b.ToTable("Books");
 
@@ -207,6 +185,23 @@ namespace EFCoreSecondConsoleApp.Migrations
                     b.ToTable("BookAuthor");
                 });
 
+            modelBuilder.Entity("EFCoreSecondConsoleApp.Models.ExampleEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ExampleEntities");
+                });
+
             modelBuilder.Entity("EFCoreSecondConsoleApp.Models.Promotion", b =>
                 {
                     b.Property<int>("PromotionId")
@@ -218,11 +213,14 @@ namespace EFCoreSecondConsoleApp.Migrations
                     b.Property<int>("BookId")
                         .HasColumnType("int");
 
+                    b.Property<int>("NewPrice")
+                        .HasColumnType("int");
+
                     b.Property<int>("PromotionType")
                         .HasColumnType("int");
 
-                    b.Property<int>("PromssionPrice")
-                        .HasColumnType("int");
+                    b.Property<string>("PromotionalText")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("PromotionId");
 
@@ -280,36 +278,6 @@ namespace EFCoreSecondConsoleApp.Migrations
                     b.ToTable("Tags");
                 });
 
-            modelBuilder.Entity("BookBookAuthor", b =>
-                {
-                    b.HasOne("EFCoreSecondConsoleApp.Models.Book", null)
-                        .WithMany()
-                        .HasForeignKey("BooksBookId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("EFCoreSecondConsoleApp.Models.BookAuthor", null)
-                        .WithMany()
-                        .HasForeignKey("bookAuthorsBookAuthorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("BookPromotion", b =>
-                {
-                    b.HasOne("EFCoreSecondConsoleApp.Models.Book", null)
-                        .WithMany()
-                        .HasForeignKey("BooksBookId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("EFCoreSecondConsoleApp.Models.Promotion", null)
-                        .WithMany()
-                        .HasForeignKey("PromotionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("BookTag", b =>
                 {
                     b.HasOne("EFCoreSecondConsoleApp.Models.Book", null)
@@ -340,7 +308,17 @@ namespace EFCoreSecondConsoleApp.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("EFCoreSecondConsoleApp.Models.BookAuthor", null)
+                        .WithMany("Books")
+                        .HasForeignKey("BookAuthorId");
+
+                    b.HasOne("EFCoreSecondConsoleApp.Models.Promotion", "Promotion")
+                        .WithMany("Books")
+                        .HasForeignKey("PromotionId");
+
                     b.Navigation("Author");
+
+                    b.Navigation("Promotion");
                 });
 
             modelBuilder.Entity("EFCoreSecondConsoleApp.Models.BookAuthor", b =>
@@ -373,6 +351,13 @@ namespace EFCoreSecondConsoleApp.Migrations
             modelBuilder.Entity("EFCoreSecondConsoleApp.Models.BookAuthor", b =>
                 {
                     b.Navigation("Authors");
+
+                    b.Navigation("Books");
+                });
+
+            modelBuilder.Entity("EFCoreSecondConsoleApp.Models.Promotion", b =>
+                {
+                    b.Navigation("Books");
                 });
 #pragma warning restore 612, 618
         }
