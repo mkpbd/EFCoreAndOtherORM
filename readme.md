@@ -525,3 +525,68 @@ public static IQueryable<BookListDto> FilterBooksBy(this IQueryable<BookListDto>
 ```
 
 ![1690338768071](image/readme/1690338768071.png)
+
+#### Other filtering options: Searching text for a specific string
+
+We could’ve created loads of other types of filters/searches of books, and searching by title is an obvious one. But you want to make sure that the LINQ commands you use to search a string are executed in the database, because they’ll perform much better than loading all the data and filtering in software. EF Core converts the following C# code in a LINQ query to a database command: **==, Equal, StartsWith, EndsWith, Contains**, and **IndexOf**.
+
+| String command | Example (finds a title with the string "The Cat sat on the mat.")         |
+| -------------- | ------------------------------------------------------------------------- |
+| StartsWith     | var books = context.Books.Where(p => p.Title.StartsWith("The")).ToList(); |
+| EndsWith       | var books = context.Books.Where(p => p.Title.EndsWith("MAT.")).ToList();  |
+| Contains       | var books = context.Books.Where(p => p.Title.Contains("cat"))             |
+
+EF Core  provides various ways to set the collation in a database. Typically, you configure the collation for the database or a specific column but you can also define the collation in a query by using the **EF.Functions.Collate** method. The following code snippet sets an SQL Server collation, which means that this query will compare the string using the **Latin1_General_CS_AS** (case-sensitive) collation for this query:
+
+```csharp
+context.Books.Where( x =>
+EF.Functions.Collate(x.Title, "Latin1_General_CS_AS")
+== “HELP” //This does not match “help”
+```
+
+Defining what is uppercase and what is lowercase over many languages with many scripts is a complex issue! Fortunately, relational databases have been performing this task for many years, and SQL Server has more than 200 collations.
+
+Generic Page query Method
+
+```csharp
+
+        public static IQueryable<T> Page<T>(this IQueryable<T> query, int pageNumZeroStart, int pageSize)
+        {
+            if (pageSize == 0)
+                throw new ArgumentOutOfRangeException
+                (nameof(pageSize), "pageSize cannot be zero.");
+            if (pageNumZeroStart != 0)
+                query = query
+                .Skip(pageNumZeroStart * pageSize);
+            return query.Take(pageSize);
+        }
+```
+
+![1690340210466](image/readme/1690340210466.png)
+
+**Create a servie Class to  provied a sorted fillterd and paged**
+
+```csharp
+public class ListBooksService
+    {
+        private readonly ApplicationDbContext _context;
+        public ListBooksService(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+        public IQueryable<BookListDto> SortFilterPage
+        (SortFilterPageOptions options)
+        {
+            var booksQuery = _context.Books
+            .AsNoTracking()
+            .MapBookToDto()
+            .OrderBooksBy(options.OrderByOptions)
+            .FilterBooksBy(options.FilterBy,  options.FilterValue);
+            options.SetupRestOfDto(booksQuery);
+            return booksQuery.Page(options.PageNum - 1,
+            options.PageSize);
+        }
+    }
+```
+
+![1690341031852](image/readme/1690341031852.png)

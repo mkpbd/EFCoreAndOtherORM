@@ -171,5 +171,25 @@ namespace EFCoreSecondConsoleApp.DataForFrontend
 
             }
         }
+
+        public static void StringCommandSQLServerDatabase()
+        {
+            using (var context = new ApplicationDbContext())
+            {
+                var books = context.Books
+                    .Where(p => p.Title.StartsWith("The"))
+                    .ToList();
+
+                var books1 = context.Books
+                .Where(p => p.Title.EndsWith("MAT."))
+                .ToList();
+
+                var books2 = context.Books
+                .Where(p => p.Title.Contains("cat"));
+
+               
+
+            }
+        }
     }
 }
