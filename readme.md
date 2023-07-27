@@ -859,3 +859,5 @@ public int BookId { get; set; }
 ```
 
 ![1690455958120](image/readme/1690455958120.png)
+
+As you can see, the update of the relationship is like the basic update you made to change the book’s published date. In this case, EF Core has to do extra work because of the relationship. EF Core creates a new row in the PriceOffers table, which you can see in the SQL snippet that EF Core produces for the code
