@@ -631,3 +631,86 @@ public void ExampleSaveEntry()
             }
         }
 ```
+
+![1690415194635](image/readme/1690415194635.png)
+
+#### Creating a book with a review
+
+Next, you'll look at a create that includes relationships—in this case, adding a new book with a review.
+
+![1690415891919](image/readme/1690415891919.png)
+
+**Add a Book Entity Class also Adds any link Entity Classes**
+
+```csharp
+public void AddBookWithReviews()
+        {
+            var book = new Book
+            {
+                Title = "New Book Added",
+                Description = "This is a description Two who we are",
+                Price = 100,
+                Reviews = new List<Review> { new Review { NumStars = 5, Comment="this is comment", VoterName="kamal passa" } },
+                Tags = new List<Tag> { new Tag { 
+                     TagName = "abc tag",
+                      TagValue = "we have a gat value",
+                } },
+
+                Author = new Author { Name ="kamal ", WebUrl = "http://abc.com" },
+
+            };
+
+            try
+            {
+                _context.Add(book);
+                _context.SaveChanges();
+
+                Console.WriteLine("data has been saved");
+
+            }catch(Exception ex)
+            {
+                Console.WriteLine("Data has not been save");
+            }
+
+        }
+```
+
+![1690418431905](image/readme/1690418431905.png)
+
+**Adding A book With an Existing Author**
+
+```csharp
+public void AddExistingAuthorBook()
+        {
+            var foundAuthor = _context.Author.SingleOrDefault(author => author.Name == "Eric Evans");
+            if (foundAuthor == null)  throw new Exception("Author not found");
+            var book = new Book
+            {
+                Title = "Test Book",
+                PublishedOn = DateTime.Today,
+                AuthorId = foundAuthor.AuthorId,
+            };
+            book.bookAuthors = new List<BookAuthor>
+                {
+                    new BookAuthor
+                    {
+                        Books = new List<Book>{ book },
+                        Author = foundAuthor
+                    }
+                };
+
+            try
+            {
+                _context.Add(book);
+                _context.SaveChanges();
+
+                Console.WriteLine("Sava data ");
+
+            }catch(Exception ex)
+            {
+                Console.WriteLine("data not save");
+            }
+        }
+```
+
+![1690421291534](image/readme/1690421291534.png)

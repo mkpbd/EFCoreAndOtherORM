@@ -9,8 +9,12 @@ namespace EFCoreSecondConsoleApp
         {
             //BookAndAutherData.ListAll();
 
-            ExampleService exampleService = new ExampleService();
-            exampleService.ExampleSaveEntry();
+            //ExampleService exampleService = new ExampleService();
+            //exampleService.ExampleSaveEntry();
+
+            var bookService = new BookAndReviewService();
+            //bookService.AddBookWithReviews();
+            bookService.AddExistingAuthorBook();
 
         }
     }
