@@ -714,3 +714,29 @@ public void AddExistingAuthorBook()
 ```
 
 ![1690421291534](image/readme/1690421291534.png)
+
+#### Updating database rows
+
+Updating a database row is achieved in three stages:
+1 Read the data (database row), possibly with some relationships.
+2 Change one or more properties (database columns).
+3 Write the changes back to the database (update the row).
+
+In this section, you’ll ignore any relationships and focus on the three stages. In the next section, you’ll learn how to update relationships by adding more commands to each stage.
+
+changes the publication date of an existing book. Through this code, you can see the standard flow of an update:
+1 You load the entity class(es) you want to change as a tracked entity.
+2 You change the property/properties in your entity class(es).
+3 You call SaveChanges to update the database.
+
+```csharp
+var book = context.Books
+.SingleOrDefault(p =>
+p.Title == "Quantum Networking");
+if (book == null)
+throw new Exception("Book not found");
+book.PublishedOn = new DateTime(2058, 1, 1);
+context.SaveChanges();
+```
+
+![1690422976760](image/readme/1690422976760.png)

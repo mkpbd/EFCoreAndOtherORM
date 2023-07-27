@@ -56,7 +56,7 @@ namespace EFCoreSecondConsoleApp.Services
         public void AddExistingAuthorBook()
         {
             var foundAuthor = _context.Author.SingleOrDefault(author => author.Name == "Eric Evans");
-            if (foundAuthor == null)  throw new Exception("Author not found");
+            if (foundAuthor == null) throw new Exception("Author not found");
             var book = new Book
             {
                 Title = "Test Book",
@@ -79,12 +79,32 @@ namespace EFCoreSecondConsoleApp.Services
 
                 Console.WriteLine("Sava data ");
 
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 Console.WriteLine("data not save");
             }
         }
 
+        public void UpdateBookOnExsitingData()
+        {
+            try
+            {
+                var book = _context.Books
+    .SingleOrDefault(p => p.Title == "Quantum Networking");
+
+                if (book == null)   throw new Exception("Book not found");
+
+                book.PublishedOn = new DateTime(2058, 1, 1);
+                book.Price = 200;
+                _context.SaveChanges();
+                Console.WriteLine("Update data");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("dose not update data");
+            }
+        }
     }
 
 }

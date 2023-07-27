@@ -14,7 +14,8 @@ namespace EFCoreSecondConsoleApp
 
             var bookService = new BookAndReviewService();
             //bookService.AddBookWithReviews();
-            bookService.AddExistingAuthorBook();
+            //bookService.AddExistingAuthorBook();
+            bookService.UpdateBookOnExsitingData();
 
         }
     }
