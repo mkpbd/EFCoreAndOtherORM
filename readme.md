@@ -740,3 +740,11 @@ context.SaveChanges();
 ```
 
 ![1690422976760](image/readme/1690422976760.png)
+
+When the SaveChanges method is called, it runs a method called DetectChanges, which compares the tracking snapshot against the entity class instance that it handed to the application when the query was originally executed. From this example, EF Core decides that only the PublishedOn property has been changed, and EF Core builds the SQL to update that property.
+
+![1690423194511](image/readme/1690423194511.png)
+
+##### **ChangePubDateDto sends data to and receives it from the user**
+
+![1690426181998](image/readme/1690426181998.png)
