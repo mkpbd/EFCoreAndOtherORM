@@ -748,3 +748,114 @@ When the SaveChanges method is called, it runs a method called DetectChanges, wh
 ##### **ChangePubDateDto sends data to and receives it from the user**
 
 ![1690426181998](image/readme/1690426181998.png)
+
+```csharp
+public class ChangePubDateDto
+{
+public int BookId { get; set; }
+public string Title { get; set; }
+[DataType(DataType.Date)]
+public DateTime PublishedOn { get; set; }
+}
+```
+
+**The quickest way to read an entity class using its primary key(s)**
+
+When you want to update a specific entity and need to read it in using its primary key, you have a few options. I used to use the Find command, but after some digging, I now recommend SingleOrDefault because it’s quicker than the Find command. But I should point out two useful things about the Find method:
+
+1. The Find method checks the current application's **DbContext** to see whether the required entity instance has already been loaded, which can save an access to the database.  But if the entity isn't in the application's **DbContext**, the load will be slower because of this extra check.
+2. The Find method is simpler and quicker to type because it's shorter than the SingleOrDefault version, such as **context.Find `<Book>`(key)** versus **context.SingleOrDefault(p => p.Bookid == key)**. The upside of using the **SingleOrDefault** method is that you can add it to the end of a query with methods such as Include, which you can’t do with Find.
+
+#### The ChangePubDateService class to handle the disconnected update
+
+![1690441533725](image/readme/1690441533725.png)
+
+![1690441575002](image/readme/1690441575002.png)
+
+**NOTE** You can see this code and try updating the publication date on the example Book App. If you download the code from the Git repo and run it locally, you'll see an Admin button for each book. This button contains a link called **Change Pub Date**, which will step you through this process. You can also see the SQL commands that EF Core uses to carry out this update via the Logs menu item.
+
+**DISCONNECTED UPDATE, SENDING ALL THE DATA**
+
+In some cases, all the data may be sent back, so there’s no reason to reload the original data. This can happen for simple entity classes, in some RESTful APIs, or processto-process communication. A lot depends on how closely the given API format matches the database format and how much you trust the other system.
+
+
+![1690442119001](image/readme/1690442119001.png)
+
+#### Simulating an update/replace request from an external system
+
+```csharp
+public void GetDataFromDataBase()
+        {
+            var author = _context.Books
+                .Where(p => p.Title == "Quantum Networking")
+                .Select(p => p.bookAuthors.First().Author)
+                .Single();
+            author.Name = "Future Person 2";
+            json = JsonConvert.SerializeObject(author);
+
+        }
+
+        public void DeserialiseDataOfJsonFormat()
+        {
+            var author = JsonConvert.DeserializeObject<Author>(json);
+            _context.Author.Update(author);
+            _context.SaveChanges();
+        }
+```
+
+#### Handling relationships in updates
+
+Now that we’ve established the three basic steps for updating the database, it’s time to look at updating relationships between entity classes—adding a new review to a book, for example. Updating relationships adds another level of complexity to the code, especially in the disconnected state, which is why I put this content in a separate section.
+
+![1690455021408](image/readme/1690455021408.png)
+
+![1690455049258](image/readme/1690455049258.png)
+
+**Principal and dependent relationships**
+
+The terms principal and dependent are used in EF to define parts of a relationship:
+
+1. Principal entity—Contains a primary key that the dependent relationship refer to via a foreign key
+2. Dependent entity—Contains the foreign key that refers to the principal entity’s primary key
+
+An entity class can be both a principal and a dependent entity at the same time. In a hierarchical relationship of, say, libraries with books that have reviews, the book would be a dependent relationship of the library entity class.
+
+#### Updating one-to-one relationships: 3.4.2 Adding a PriceOffer to a book
+
+```csharp
+public class PriceOffer
+{
+public int PriceOfferId { get; set; }
+public decimal NewPrice { get; set; }
+public string PromotionalText { get; set; }
+//-----------------------------------------------
+//Relationships
+public int BookId { get; set; }
+}
+```
+
+![1690455600487](image/readme/1690455600487.png)
+
+**CONNECTED STATE UPDATE**
+
+1 Load the Book entity with any existing PriceOffer relationship.
+2 Set the relationship to the new PriceOffer entity you want to apply to this book.
+3 Call SaveChanges to update the database.
+
+```csharp
+ public void AddingNewPromosionPriceToExistingBook()
+        {
+            /*
+             * Finds a book. In this example, the book doesn’t have an existing promotion, but it would also work if there were an existing promotion.
+             */
+            var book = _context.Books.Include(p => p.Promotion).First(p => p.Promotion == null);
+            book.Promotion = new Promotion
+            {
+                NewPrice = book.Price / 2,
+                PromotionalText = "Half price today!"
+            };
+            _context.SaveChanges();
+        }
+```
+
+![1690455958120](image/readme/1690455958120.png)

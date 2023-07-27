@@ -31,5 +31,6 @@ namespace EFCoreSecondConsoleApp.Data
         public DbSet<Review> Reviews { get; set; }
         public DbSet<BookAuthor> BookAuthor { get; set; }
         public DbSet<Tag> Tags { get; set; }
+        public DbSet<PriceOffer> PriceOffers { get; set; }
     }
 }
