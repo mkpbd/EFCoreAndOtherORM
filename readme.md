@@ -778,7 +778,6 @@ When you want to update a specific entity and need to read it in using its prima
 
 In some cases, all the data may be sent back, so there’s no reason to reload the original data. This can happen for simple entity classes, in some RESTful APIs, or processto-process communication. A lot depends on how closely the given API format matches the database format and how much you trust the other system.
 
-
 ![1690442119001](image/readme/1690442119001.png)
 
 #### Simulating an update/replace request from an external system
@@ -861,3 +860,67 @@ public int BookId { get; set; }
 ![1690455958120](image/readme/1690455958120.png)
 
 As you can see, the update of the relationship is like the basic update you made to change the book’s published date. In this case, EF Core has to do extra work because of the relationship. EF Core creates a new row in the PriceOffers table, which you can see in the SQL snippet that EF Core produces for the code
+
+#### ChangePriceOfferService class with a method to handle each stage
+
+```csharp
+public class ChangePriceOfferService : IChangePriceOfferService
+{
+private readonly EfCoreContext _context;
+public Book OrgBook { get; private set; }
+public ChangePriceOfferService(EfCoreContext context)
+{
+_context = context;
+}
+public PriceOffer GetOriginal(int id)
+{
+OrgBook = _context.Books
+.Include(r => r.Promotion)
+.Single(k => k.BookId == id);
+return OrgBook?.Promotion
+?? new PriceOffer
+{
+BookId = id,
+NewPrice = OrgBook.Price
+};
+}
+public Book AddUpdatePriceOffer(PriceOffer promotion)
+{
+var book = _context.Books
+.Include(r => r.Promotion)
+.Single(k => k.BookId
+== promotion.BookId);
+if (book.Promotion == null)
+{
+book.Promotion = promotion;
+}
+else
+{
+book.Promotion.NewPrice
+= promotion.NewPrice;
+book.Promotion.PromotionalText
+= promotion.PromotionalText;
+}
+_context.SaveChanges();
+return book;
+}
+}
+```
+
+![1690608371406](image/readme/1690608371406.png)
+
+#### ALTERNATIVE WAY OF UPDATING THE RELATIONSHIP: CREATING A NEW ROW DIRECTLY
+
+```csharp
+var book = context.Books
+.First(p => p.Promotion == null);
+context.Add( new PriceOffer
+{
+BookId = book.BookId,
+NewPrice = book.Price / 2,
+PromotionalText = "Half price today!"
+});
+context.SaveChanges();
+```
+
+![1690608508237](image/readme/1690608508237.png)
