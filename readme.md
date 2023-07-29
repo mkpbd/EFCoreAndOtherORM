@@ -1087,3 +1087,43 @@ modelBuilder.Entity<Book>()
 ```
 
 ![1690611244018](image/readme/1690611244018.png)
+
+#### Deleting a dependent-only entity with no relationships
+
+I've chosen the PriceOffer entity class to show a basic delete because it’s a dependent entity. Therefore, you can delete it without affecting other entities. This listing finds a PriceOffer and then deletes it.
+
+```csharp
+var promotion = context.PriceOffers
+.First();
+context.Remove(promotion);
+context.SaveChanges();
+```
+
+![1690630808665](image/readme/1690630808665.png)
+
+#### Deleting a principal entity that has relationships
+
+DEFINITION Referential integrity is a relational database concept indicating that table relationships must always be consistent. Any foreign-key field must agree with the primary key referenced by the foreign key.
+
+You can tell the database server to delete the dependent entities that rely on the principal entity, known as cascade deletes.
+
+You can tell the database server to set the foreign keys of the dependent entities to null, if the column allows that.
+If neither of those rules is set up, the database server will raise an error if you try to delete a principal entity with dependent entities.
+
+**Deleting a book with its dependent relationships**
+
+Deleting a book that has three dependent entity classes
+
+```csharp
+var book = context.Books
+.Include(p => p.Promotion)
+.Include(p => p.Reviews)
+.Include(p => p.AuthorsLink)
+.Include(p => p.Tags)
+.Single(p => p.Title
+== "Quantum Networking");
+context.Books.Remove(book);
+context.SaveChanges();
+```
+
+![1690631057216](image/readme/1690631057216.png)
