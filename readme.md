@@ -924,3 +924,166 @@ context.SaveChanges();
 ```
 
 ![1690608508237](image/readme/1690608508237.png)
+
+#### Adding a review to a book in the connected state
+
+![1690609015471](image/readme/1690609015471.png)
+
+```csharp
+var book = context.Books
+.Include(p => p.Reviews)
+.First();
+book.Reviews.Add(new Review
+{
+VoterName = "Unit Test",
+NumStars = 5,
+Comment = "Great book!"
+});
+context.SaveChanges();
+```
+
+![1690609091199](image/readme/1690609091199.png)
+
+#### ALTERING/REPLACING ALL THE ONE-TO-MANY RELATIONSHIPS
+
+Before moving on to the disconnected state update, I want to consider the case in which you want to alter or replace the whole collection, rather than add to the collection, as you did with the review.
+
+If the books had categories (say, Software Design, Software Languages, and so on), you might allow an admin user to change the categories. One way to implement this change would be to show the current categories in a multiselect list, allow the admin user to change them, and then replace all the categories on the book with the new selection.
+
+#### Replacing a whole collection of reviews with another collection
+
+```csharp
+var book = context.Books
+.Include(p => p.Reviews)
+.Single(p => p.BookId == twoReviewBookId);
+book.Reviews = new List<Review>
+{
+new Review
+{
+VoterName = "Unit Test",
+NumStars = 5,
+}
+};
+context.SaveChanges();
+```
+
+![1690609294102](image/readme/1690609294102.png)
+
+#### DISCONNECTED-STATE UPDATE
+
+```csharp
+public class AddReviewService
+{
+private readonly EfCoreContext _context;
+public string BookTitle { get; private set; }
+public AddReviewService(EfCoreContext context)
+{
+_context = context;
+}
+public Review GetBlankReview(int id)
+{
+BookTitle = _context.Books
+.Where(p => p.BookId == id)
+.Select(p => p.Title)
+.Single();
+return new Review
+{
+BookId = id
+};
+}
+public Book AddReviewToBook(Review review)
+{
+var book = _context.Books
+.Include(r => r.Reviews)
+.Single(k => k.BookId
+== review.BookId);
+book.Reviews.Add(review);
+_context.SaveChanges();
+return book;
+}
+}
+```
+
+![1690609420411](image/readme/1690609420411.png)
+
+##### Updating a many-to-many relationship
+
+In EF Core, we talk about many-to-many relationships, but a relational database doesn't directly implement many-to-many relationships. Instead, we're dealing with two oneto-many relationships
+
+![1690609629718](image/readme/1690609629718.png)
+
+A many-to-many relationship in the database is created by a linking table that contains the primary keys of the two tables that need a many-to-many relationship.
+
+In EF Core, you have two ways to create many-to-many relationships between two entity classes:
+
+#### UPDATING A MANY-TO-MANY RELATIONSHIP VIA A LINKING ENTITY CLASS
+
+![1690610061825](image/readme/1690610061825.png)
+
+```csharp
+var book = context.Books
+.Include(p => p.AuthorsLink)
+.Single(p => p.Title == "Quantum Networking");
+var existingAuthor = context.Authors
+.Single(p => p.Name == "Martin Fowler");
+book.AuthorsLink.Add(new BookAuthor
+{
+Book = book,
+Author = existingAuthor,
+Order = (byte) book.AuthorsLink.Count
+});
+context.SaveChanges();
+```
+
+![1690610182311](image/readme/1690610182311.png)
+
+##### UPDATING A MANY-TO-MANY RELATIONSHIP WITH DIRECT ACCESS TO THE OTHER ENTIT
+
+![1690610287113](image/readme/1690610287113.png)
+
+```csharp
+var book = context.Books
+.Include(p => p.Tags)
+.Single(p => p.Title == "Quantum Networking");
+var existingTag = context.Tags
+.Single(p => p.TagId == "Editor's Choice");
+book.Tags.Add(existingTag);
+context.SaveChanges();
+```
+
+![1690610347767](image/readme/1690610347767.png)
+
+##### Updating the foreign key to change a relationship
+
+```csharp
+var reviewToChange = context
+.Find<Review>(dto.ReviewId);
+reviewToChange.BookId = dto.NewBookId;
+context.SaveChanges();
+```
+
+![1690610478064](image/readme/1690610478064.png)
+
+**NOTE** When updating relationships via foreign keys, you may need to access entities that don’t have a DbSet `<T>` property in the application’s DbContext, so how can you read in the data? Listing 3.21 uses the Find `<T>` method, but if you need a more complex query, you can access any entity via the Set `<T>` method, such as **context.Set `<Review>`().Where(p => p.NumVotes > 5)**.
+
+#### Deleting entities
+
+Deleting data is easier than making the updates. Before I describe how to delete entities from the database, I want to introduce an approach called soft delete, in which an entity is hidden instead of deleted.
+
+Adding a global query filter to the DbSet `<Book>`Books property
+
+```csharp
+public class EfCoreContext : DbContext
+{
+//… Other parts removed for clarity
+protected override void
+OnModelCreating(ModelBuilder modelBuilder)
+{
+//… other configration parts removed for clarity
+modelBuilder.Entity<Book>()
+.HasQueryFilter(p => !p.SoftDeleted);
+}
+}
+```
+
+![1690611244018](image/readme/1690611244018.png)
